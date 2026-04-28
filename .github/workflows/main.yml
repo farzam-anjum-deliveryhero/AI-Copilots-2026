@@ -8,18 +8,18 @@ jobs:
   encrypt:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install StatiCrypt
         run: npm install -g staticrypt
 
       - name: Encrypt index.html
-        run: staticrypt index.html -p "${{ secrets.PAGE_PASSWORD }}" -o index.html
+        run: staticrypt index.html --password "${{ secrets.PAGE_PASSWORD }}" --short --remember 0 -d .
 
       - name: Commit encrypted file
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add index.html
-          git commit -m "Encrypt page"
+          git commit -m "Encrypt page" || echo "No changes"
           git push
