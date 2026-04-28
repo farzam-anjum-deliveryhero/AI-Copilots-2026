@@ -1,0 +1,3771 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Copilots for Backoffice &amp; Internal Tools — Delivery Hero</title>
+<!-- Font: Figtree — Cape Design System's mandatory font family -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400&amp;display=swap" rel="stylesheet"/>
+<style>
+    /* ============================================================
+       THEME VARIABLES — change these to retheme the whole deck
+       ============================================================ */
+    :root {
+      /* Cape-aligned dark surface — slightly warmer than pure black */
+      --bg:           #0D0F14;
+      --bg-card:      rgba(255,255,255,0.045);
+      --bg-card-hi:   rgba(255,255,255,0.08);
+
+      /* Cape B2B brand color — --cp-base-color-branded / --cp-color-brand-primary */
+      --accent:       #4629FF;
+      --accent-rgb:   70,41,255;
+
+      /* Cape info blue — aligned with Cape's info semantic color */
+      --blue:         #4C9EFF;
+      --blue-rgb:     76,158,255;
+
+      /* Cape text hierarchy — jacaranda-grey-inspired for dark context */
+      --text:         #F2F3F5;
+      --text-sec:     #8C95A6;
+      --text-muted:   #424D62;
+      --border:       rgba(255,255,255,0.065);
+      --border-hi:    rgba(255,255,255,0.12);
+
+      /* Cape DS mandatory font — Figtree only */
+      --font-d: 'Figtree', sans-serif;
+      --font-b: 'Figtree', sans-serif;
+
+      /* ALL sizes use clamp() — no fixed px */
+      --fs-hero:    clamp(2.8rem, 9vw, 9rem);
+      --fs-h1:      clamp(2rem, 5.5vw, 5.5rem);
+      --fs-h2:      clamp(1.4rem, 3.2vw, 3rem);
+      --fs-h3:      clamp(1rem, 1.8vw, 1.6rem);
+      --fs-body:    clamp(0.85rem, 1.3vw, 1.1rem);
+      --fs-sm:      clamp(0.72rem, 0.95vw, 0.88rem);
+      --fs-label:   clamp(0.62rem, 0.78vw, 0.76rem);
+      --fs-counter: clamp(5rem, 18vw, 16rem);
+
+      --pad:  clamp(1.5rem, 4.5vw, 5rem);
+      --gap:  clamp(0.8rem, 2vw, 2.2rem);
+      --egap: clamp(0.3rem, 0.7vw, 0.7rem);
+
+      --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
+      --dur: 0.7s;
+    }
+
+    /* ============================================================
+       VIEWPORT BASE (mandatory from skill)
+       ============================================================ */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-b);
+      font-size: var(--fs-body);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    /* ============================================================
+       HORIZONTAL SLIDES ARCHITECTURE
+       ============================================================ */
+    #deck {
+      display: flex;
+      width: calc(100vw * 18);
+      height: 100vh;
+      height: 100dvh;
+      transition: transform 0.8s var(--ease-expo);
+      will-change: transform;
+    }
+
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      flex-shrink: 0;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: var(--pad);
+    }
+
+    /* Subtle grid overlay on every slide */
+    .slide::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.022) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.022) 1px, transparent 1px);
+      background-size: 64px 64px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ============================================================
+       ANIMATED AMBIENT BACKGROUNDS
+       Injected by _buildAmbients() — blurred blobs that drift.
+       Each blob moves independently via separate keyframes so
+       the layers don't stay in sync — feels organic, not mechanical.
+       ============================================================ */
+
+    /* Blob containers sit beneath content */
+    .slide-ambient {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .sa-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      will-change: transform;
+    }
+
+    /* Three independent drift paths — combine for organic motion */
+    @keyframes blob-a {
+      0%, 100% { transform: translate(0,    0)    scale(1);    }
+      25%       { transform: translate(-7%,  9%)   scale(1.09); }
+      50%       { transform: translate( 6%, -6%)   scale(0.92); }
+      75%       { transform: translate(-4%, -9%)   scale(1.06); }
+    }
+    @keyframes blob-b {
+      0%, 100% { transform: translate(0,    0)    scale(1);    }
+      33%       { transform: translate( 9%, -7%)   scale(1.11); }
+      66%       { transform: translate(-7%,  8%)   scale(0.91); }
+    }
+    @keyframes blob-c {
+      0%, 100% { transform: translate(0,    0)    scale(1);    }
+      50%       { transform: translate(-9%, -9%)   scale(1.13); }
+    }
+
+    /* All direct content above the grid */
+    .slide > * { position: relative; z-index: 1; }
+
+    /* Ambient layer must stay behind content */
+    .slide > .slide-ambient { position: absolute; z-index: 0; }
+
+    /* ============================================================
+       PROGRESS BAR
+       ============================================================ */
+    #progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      width: 0%;
+      background: var(--accent);
+      box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.6);
+      z-index: 9999;
+      transition: width 0.6s var(--ease-quart);
+    }
+
+    /* ============================================================
+       NAV DOTS
+       ============================================================ */
+    #dots {
+      position: fixed;
+      bottom: clamp(0.9rem, 2.2vh, 1.8rem);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: clamp(0.35rem, 0.5vw, 0.55rem);
+      z-index: 9999;
+      list-style: none;
+    }
+
+    .dot {
+      width:  clamp(5px, 0.45vw, 7px);
+      height: clamp(5px, 0.45vw, 7px);
+      border-radius: 50%;
+      background: var(--text-muted);
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s, width 0.3s, border-radius 0.3s;
+      padding: 0;
+    }
+
+    .dot.on {
+      background: var(--accent);
+      width: clamp(18px, 1.4vw, 24px);
+      border-radius: 4px;
+      box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.7);
+    }
+
+    /* ============================================================
+       KEYBOARD HINT
+       ============================================================ */
+    #hint {
+      position: fixed;
+      bottom: clamp(0.9rem, 2.2vh, 1.8rem);
+      right: var(--pad);
+      font-size: var(--fs-label);
+      color: var(--text-muted);
+      letter-spacing: 0.07em;
+      z-index: 9999;
+    }
+
+    /* ============================================================
+       SLIDE NUMBER
+       ============================================================ */
+    .snum {
+      position: absolute;
+      top: clamp(1rem, 2.5vh, 2rem);
+      right: var(--pad);
+      font-family: var(--font-d);
+      font-size: var(--fs-label);
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      z-index: 2;
+    }
+
+    /* ============================================================
+       SHARED COMPONENTS
+       ============================================================ */
+
+    /* Eyebrow label */
+    .lbl {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+      font-size: var(--fs-label);
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: var(--egap);
+    }
+    .lbl::before {
+      content: '';
+      display: block;
+      width: 1.5em;
+      height: 1px;
+      background: var(--accent);
+      flex-shrink: 0;
+    }
+
+    /* Outcome chip */
+    .chip {
+      display: inline-block;
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(var(--accent-rgb), 0.09);
+      border: 1px solid rgba(var(--accent-rgb), 0.22);
+      border-radius: 100px;
+      padding: 0.3em 0.8em;
+    }
+
+    /* Source credit */
+    .src {
+      font-size: clamp(0.5rem, 0.65vw, 0.62rem);
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 0.4em;
+    }
+
+    /* ── Source badge — prominent company-attributed citation ── */
+    .source-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 100px;
+      padding: 0.32em 0.9em 0.32em 0.5em;
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      font-weight: 500;
+      white-space: nowrap;
+      vertical-align: middle;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .source-tag:hover {
+      background: rgba(255,255,255,0.13);
+      border-color: rgba(255,255,255,0.3);
+      color: var(--text);
+    }
+
+    .source-tag .src-logo {
+      width: clamp(14px, 1.2vw, 18px);
+      height: clamp(14px, 1.2vw, 18px);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .source-tag .src-logo svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Slide-level source row — top-left so presenter can reference it first */
+    .slide-source {
+      position: absolute;
+      top: clamp(1rem, 2.5vh, 2rem);
+      left: var(--pad);
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      flex-wrap: wrap;
+    }
+
+    /* ============================================================
+       REVEAL ANIMATIONS — triggered by .on class on slide
+       ============================================================ */
+    .rv {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.65s var(--ease-expo), transform 0.65s var(--ease-expo);
+    }
+
+    .slide.on .rv { opacity: 1; transform: translateY(0); }
+
+    /* Data attribute delays */
+    .slide.on [data-d="1"] { transition-delay: 0.08s; }
+    .slide.on [data-d="2"] { transition-delay: 0.18s; }
+    .slide.on [data-d="3"] { transition-delay: 0.28s; }
+    .slide.on [data-d="4"] { transition-delay: 0.38s; }
+    .slide.on [data-d="5"] { transition-delay: 0.48s; }
+    .slide.on [data-d="6"] { transition-delay: 0.58s; }
+    .slide.on [data-d="7"] { transition-delay: 0.70s; }
+    .slide.on [data-d="8"] { transition-delay: 0.84s; }
+
+    /* ============================================================
+       SLIDE 0 — COVER
+       ============================================================ */
+    .s-cover {
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: var(--pad);
+      background: var(--bg);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cover-bg-glow {
+      position: absolute;
+      width: min(90vw, 900px);
+      height: min(90vw, 900px);
+      top: -30%;
+      right: -20%;
+      background: radial-gradient(circle, rgba(var(--accent-rgb),0.10) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cover-inner {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      height: 100%;
+      max-width: min(80vw, 900px);
+      gap: clamp(1.2rem, 2.5vw, 2.5rem);
+      position: relative;
+      z-index: 1;
+    }
+
+    .cover-eyebrow {
+      font-size: var(--fs-label);
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .cover-title {
+      font-family: var(--font-d);
+      font-size: clamp(2.4rem, 6vw, 6rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .cover-desc {
+      font-size: clamp(0.9rem, 1.4vw, 1.2rem);
+      font-weight: 400;
+      color: var(--text-sec);
+      max-width: 55ch;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .cover-divider {
+      width: clamp(3rem, 6vw, 5rem);
+      height: 2px;
+      background: var(--accent);
+      border-radius: 2px;
+      margin: 0 auto;
+    }
+
+    .cover-author {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.8rem, 1.5vw, 1.2rem);
+    }
+
+    /* Avatar: swap <div class="cover-avatar"> for <img> when photo is ready */
+    .cover-avatar {
+      width: clamp(2.8rem, 4.5vw, 4rem);
+      height: clamp(2.8rem, 4.5vw, 4rem);
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-d);
+      font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 2px solid rgba(var(--accent-rgb), 0.35);
+    }
+
+    .cover-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cover-author-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15em;
+    }
+
+    .cover-author-name {
+      font-size: clamp(0.85rem, 1.2vw, 1rem);
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .cover-author-role {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       SLIDE 1 — HOOK
+       ============================================================ */
+    #s1 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: clamp(2rem, 4vw, 5rem);
+    }
+
+    .s1-glow {
+      position: absolute;
+      width: min(70vw, 800px);
+      height: min(70vw, 800px);
+      top: -20%;
+      right: -15%;
+      background: radial-gradient(ellipse, rgba(var(--accent-rgb), 0.09) 0%, transparent 68%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .s1-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .s1-counter {
+      font-family: var(--font-d);
+      font-size: var(--fs-counter);
+      font-weight: 800;
+      line-height: 0.88;
+      letter-spacing: -0.04em;
+      color: var(--text);
+    }
+    .s1-counter .acc { color: var(--accent); }
+
+    .s1-clabel {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      font-weight: 300;
+      margin-top: clamp(0.4rem, 0.8vw, 0.9rem);
+      margin-bottom: var(--gap);
+      max-width: 36ch;
+    }
+
+    .s1-insight {
+      font-size: var(--fs-body);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: var(--egap);
+      letter-spacing: -0.01em;
+    }
+
+    .s1-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      font-weight: 400;
+      max-width: 44ch;
+      line-height: 1.6;
+    }
+
+    .s1-foot {
+      position: absolute;
+      bottom: clamp(1.2rem, 2.5vh, 2.5rem);
+      left: var(--pad);
+      font-size: clamp(0.48rem, 0.62vw, 0.6rem);
+      color: var(--text-muted);
+    }
+
+    /* Right: square grid visual */
+    .s1-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: clamp(0.8rem, 1.5vw, 1.4rem);
+    }
+
+    .s1-grid-label {
+      font-size: var(--fs-sm);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .s1-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: clamp(3px, 0.45vw, 7px);
+      width: 100%;
+      max-width: min(42vw, 480px);
+    }
+
+    .s1-sq {
+      aspect-ratio: 1;
+      border-radius: clamp(2px, 0.3vw, 4px);
+      background: rgba(255,255,255,0.07);
+      transition: background 0.25s var(--ease-quart);
+    }
+
+    .slide.on .s1-sq.s1-sq-on {
+      background: var(--accent);
+      box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.35);
+    }
+
+    .s1-legend {
+      display: flex;
+      gap: clamp(1rem, 2vw, 2rem);
+    }
+
+    .s1-leg {
+      display: flex;
+      align-items: center;
+      gap: 0.5em;
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+    }
+
+    .s1-leg-dot {
+      width: clamp(8px, 0.7vw, 11px);
+      height: clamp(8px, 0.7vw, 11px);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .s1-leg-dot.waste  { background: var(--accent); }
+    .s1-leg-dot.real   { background: rgba(255,255,255,0.13); }
+
+    /* Supporting mini-facts on hook slide */
+    .s1-facts {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.6rem, 1vw, 1rem);
+      margin-top: var(--gap);
+      padding-left: clamp(0.9rem, 1.5vw, 1.4rem);
+      border-left: 2px solid rgba(var(--accent-rgb), 0.25);
+    }
+
+    .s1-fact {
+      display: flex;
+      align-items: center;
+      gap: 0.8em;
+    }
+
+    .s1-fact-n {
+      font-family: var(--font-d);
+      font-size: clamp(1.1rem, 2vw, 1.7rem);
+      font-weight: 800;
+      color: var(--text);
+      white-space: nowrap;
+      flex-shrink: 0;
+      line-height: 1;
+      min-width: clamp(3.5rem, 6vw, 5.5rem);
+    }
+
+    .s1-fact-n .fact-unit {
+      font-size: 0.58em;
+      font-weight: 600;
+      color: var(--accent);
+      margin-left: 0.15em;
+    }
+
+    .s1-fact-d {
+      font-size: clamp(0.72rem, 1vw, 0.88rem);
+      color: var(--text-sec);
+      line-height: 1.4;
+    }
+
+    /* ============================================================
+       SLIDE 2 — PROBLEM
+       ============================================================ */
+    .s2 {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: var(--gap);
+      align-items: center;
+    }
+
+    .s2-h {
+      margin-bottom: var(--egap);
+    }
+
+    .s2-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      line-height: 1.6;
+      max-width: 30ch;
+    }
+
+    .legend {
+      display: flex;
+      gap: 1.2em;
+      margin-bottom: clamp(0.6rem, 1vh, 1rem);
+    }
+
+    .leg-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4em;
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+    }
+
+    .leg-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .leg-dot.m { background: var(--accent); }
+    .leg-dot.s { background: var(--blue); }
+
+    .bar-rows {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.55rem, 1vh, 1rem);
+    }
+
+    .brow {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3em;
+    }
+
+    .brow-lbl {
+      display: flex;
+      justify-content: space-between;
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+    }
+
+    .btrack {
+      height: clamp(5px, 1vh, 9px);
+      background: rgba(255,255,255,0.05);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .bfill {
+      height: 100%;
+      border-radius: 100px;
+      width: 0;
+      transition: width 1.1s var(--ease-expo);
+    }
+
+    .bfill.m { background: var(--accent); }
+    .bfill.s { background: var(--blue); }
+
+    /* Bar fill transition triggered when slide gets .on */
+    .slide.on .bfill { width: var(--tw); }
+
+    /* Staggered bar delays */
+    .slide.on .brow:nth-child(1) .bfill { transition-delay: 0.2s; }
+    .slide.on .brow:nth-child(2) .bfill { transition-delay: 0.4s; }
+    .slide.on .brow:nth-child(3) .bfill { transition-delay: 0.6s; }
+    .slide.on .brow:nth-child(4) .bfill { transition-delay: 0.8s; }
+
+    /* ============================================================
+       SLIDE 3 — THE SHIFT
+       ============================================================ */
+    .s3 {
+      align-items: center;
+      text-align: center;
+    }
+
+    .s3-h {
+      margin-bottom: var(--egap);
+    }
+
+    .s3-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      margin-bottom: var(--gap);
+      max-width: 52ch;
+    }
+
+    .nodes {
+      display: flex;
+      align-items: center;
+      max-width: min(88vw, 950px);
+    }
+
+    .node {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(0.5rem, 0.9vh, 0.9rem);
+      opacity: 0;
+      transform: translateY(20px) scale(0.9);
+      transition: opacity 0.7s var(--ease-expo), transform 0.7s var(--ease-expo);
+    }
+
+    .slide.on .node:nth-child(1) { opacity:1; transform:none; transition-delay: 0.15s; }
+    .slide.on .node:nth-child(3) { opacity:1; transform:none; transition-delay: 0.55s; }
+    .slide.on .node:nth-child(5) { opacity:1; transform:none; transition-delay: 0.95s; }
+
+    .node-ico {
+      width:  clamp(56px, 8vw, 96px);
+      height: clamp(56px, 8vw, 96px);
+      border-radius: clamp(12px, 1.5vw, 20px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.4rem, 2.8vw, 2.4rem);
+      background: var(--bg-card);
+      border: 1px solid var(--border-hi);
+      transition: border-color 0.5s, box-shadow 0.5s;
+    }
+
+    .node.active .node-ico {
+      border-color: var(--accent);
+      box-shadow: 0 0 28px rgba(var(--accent-rgb), 0.22);
+    }
+
+    .node-title {
+      font-family: var(--font-d);
+      font-size: var(--fs-body);
+      font-weight: 700;
+    }
+
+    .node-sub {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      max-width: 14ch;
+      text-align: center;
+    }
+
+    /* Arrow connector */
+    .nconn {
+      flex: 0 0 auto;
+      width: clamp(2.5rem, 5.5vw, 7rem);
+      height: 1px;
+      position: relative;
+      opacity: 0;
+      transition: opacity 0.5s var(--ease-expo);
+    }
+
+    .slide.on .nconn:nth-child(2) { opacity: 1; transition-delay: 0.35s; }
+    .slide.on .nconn:nth-child(4) { opacity: 1; transition-delay: 0.75s; }
+
+    .nconn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(255,255,255,0.08), var(--accent));
+    }
+
+    .nconn::after {
+      content: '';
+      position: absolute;
+      right: -1px;
+      top: -4px;
+      border-left: 8px solid var(--accent);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+
+    /* ============================================================
+       SLIDES 4–6 — CASE STUDIES (shared grid)
+       ============================================================ */
+    .cs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(1.2rem, 2.8vw, 4rem);
+      align-items: center;
+    }
+
+    .cs-h {
+      line-height: 1;
+      margin-bottom: var(--egap);
+    }
+
+    .cs-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      margin-bottom: var(--gap);
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.35rem, 0.7vh, 0.7rem);
+      margin-bottom: var(--gap);
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7em;
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      line-height: 1.45;
+    }
+
+    .sn {
+      flex-shrink: 0;
+      width:  clamp(17px, 1.4vw, 21px);
+      height: clamp(17px, 1.4vw, 21px);
+      border-radius: 50%;
+      background: rgba(var(--accent-rgb), 0.12);
+      border: 1px solid rgba(var(--accent-rgb), 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(0.48rem, 0.55vw, 0.62rem);
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    /* ============================================================
+       SLIDE 4 — MICROSOFT before/after
+       ============================================================ */
+    .ba-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.55rem, 1vh, 1rem);
+    }
+
+    .ba-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: clamp(0.7rem, 1.4vw, 1.4rem);
+    }
+
+    .ba-card.after {
+      border-color: rgba(var(--accent-rgb), 0.22);
+    }
+
+    .ba-tag {
+      font-size: var(--fs-label);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .ba-tag.bef { color: var(--text-muted); }
+    .ba-tag.aft { color: var(--accent); }
+
+    .ba-time {
+      font-family: var(--font-d);
+      font-size: clamp(1.6rem, 3.5vw, 3.2rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-top: 0.15em;
+    }
+    .ba-card.after .ba-time { color: var(--accent); }
+
+    .ba-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      margin-top: 0.2em;
+    }
+
+    .ba-bar {
+      height: 4px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 100px;
+      margin-top: 0.8em;
+      overflow: hidden;
+    }
+
+    .ba-fill {
+      height: 100%;
+      border-radius: 100px;
+      width: 0;
+      transition: width 1.3s var(--ease-expo);
+    }
+    .slide.on .ba-fill { width: var(--tw); }
+    .slide.on .ba-fill.b-delay { transition-delay: 0.3s; }
+    .slide.on .ba-fill.a-delay { transition-delay: 0.7s; }
+
+    .out-chip {
+      background: rgba(var(--accent-rgb), 0.07);
+      border: 1px solid rgba(var(--accent-rgb), 0.18);
+      border-radius: 8px;
+      padding: clamp(0.5rem, 0.9vw, 0.9rem);
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+    }
+
+    .out-chip strong {
+      display: block;
+      font-family: var(--font-d);
+      font-size: var(--fs-body);
+      color: var(--text);
+      font-weight: 700;
+      margin-bottom: 0.2em;
+    }
+
+    /* ============================================================
+       SLIDE 5 — SALESFORCE bars
+       ============================================================ */
+    .sf-vis {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1rem, 2vh, 2rem);
+    }
+
+    .sf-grp {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4em;
+    }
+
+    .sf-grp-hd {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .sf-metric {
+      font-family: var(--font-d);
+      font-size: clamp(1.8rem, 4vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1;
+    }
+    .sf-metric.bef { color: var(--text-muted); }
+    .sf-metric.aft { color: var(--accent); }
+
+    .sf-lbl {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+
+    .sf-track {
+      height: clamp(5px, 0.9vh, 8px);
+      background: rgba(255,255,255,0.05);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+
+    .sf-fill {
+      height: 100%;
+      border-radius: 100px;
+      width: 0;
+      transition: width 1.2s var(--ease-expo);
+    }
+    .slide.on .sf-fill.b { width: 100%; background: rgba(255,255,255,0.12); transition-delay: 0.25s; }
+    .slide.on .sf-fill.a { width: 38.9%; background: var(--accent); transition-delay: 0.65s; }
+
+    .sf-big {
+      text-align: center;
+      margin-top: clamp(0.8rem, 1.5vh, 1.5rem);
+    }
+
+    .sf-big-num {
+      font-family: var(--font-d);
+      font-size: clamp(3rem, 7vw, 6rem);
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .sf-big-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+
+    .sf-stats {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.5rem, 1vh, 1rem);
+    }
+
+    .sf-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: clamp(0.65rem, 1.2vw, 1.2rem);
+    }
+
+    .sf-stat-n {
+      font-family: var(--font-d);
+      font-size: clamp(1.4rem, 2.8vw, 2.4rem);
+      font-weight: 800;
+      color: var(--blue);
+      line-height: 1;
+    }
+
+    .sf-stat-d {
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      margin-top: 0.2em;
+    }
+
+    /* ============================================================
+       SLIDE 6 — ZENDESK canvas chart
+       ============================================================ */
+    .zd-chart {
+      position: relative;
+      width: 100%;
+    }
+
+    .zd-chart canvas {
+      width: 100%;
+      max-height: min(52vh, 380px);
+      display: block;
+    }
+
+    /* ============================================================
+       SLIDE 7 — PATTERNS
+       ============================================================ */
+    .s7 {
+      align-items: center;
+      text-align: center;
+    }
+
+    .s7-h {
+      margin-bottom: var(--egap);
+    }
+
+    .s7-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      margin-bottom: var(--gap);
+    }
+
+    .p-cards {
+      display: flex;
+      gap: clamp(0.8rem, 1.4vw, 1.4rem);
+      max-width: min(92vw, 1020px);
+    }
+
+    .p-card {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: clamp(1rem, 1.8vw, 2rem);
+      text-align: left;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s var(--ease-expo), transform 0.7s var(--ease-expo);
+    }
+
+    .slide.on .p-card:nth-child(1) { opacity:1; transform:none; transition-delay: 0.18s; }
+    .slide.on .p-card:nth-child(2) { opacity:1; transform:none; transition-delay: 0.38s; }
+    .slide.on .p-card:nth-child(3) { opacity:1; transform:none; transition-delay: 0.58s; }
+
+    .p-card-stat {
+      font-family: var(--font-d);
+      font-size: clamp(1.2rem, 2.4vw, 2rem);
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 0.35em;
+      line-height: 1;
+    }
+
+    .p-card-title {
+      font-size: var(--fs-body);
+      font-weight: 600;
+      margin-bottom: 0.4em;
+    }
+
+    .p-card-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ============================================================
+       SLIDE 8 — OPPORTUNITY
+       ============================================================ */
+    .s8 {
+      align-items: center;
+    }
+
+    .s8-top {
+      text-align: center;
+      margin-bottom: clamp(0.5rem, 1.2vh, 1.2rem);
+    }
+
+    .s8-h {
+      margin-bottom: var(--egap);
+    }
+
+    .s8-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+    }
+
+    .opp-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: clamp(0.7rem, 1.2vw, 1.4rem);
+      max-width: min(95vw, 1060px);
+      width: 100%;
+    }
+
+    .opp-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(0.9rem, 1.6vw, 1.6rem);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s var(--ease-expo), transform 0.7s var(--ease-expo);
+    }
+
+    .slide.on .opp-card:nth-child(1) { opacity:1; transform:none; transition-delay: 0.18s; }
+    .slide.on .opp-card:nth-child(2) { opacity:1; transform:none; transition-delay: 0.38s; }
+    .slide.on .opp-card:nth-child(3) { opacity:1; transform:none; transition-delay: 0.58s; }
+
+    /* Gradient top border */
+    .opp-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--blue));
+    }
+
+    .opp-icon {
+      font-size: clamp(1.4rem, 2.4vw, 2.4rem);
+      margin-bottom: clamp(0.4rem, 0.8vh, 0.8rem);
+    }
+
+    .opp-title {
+      font-family: var(--font-d);
+      font-size: var(--fs-h3);
+      font-weight: 800;
+      margin-bottom: clamp(0.3rem, 0.6vh, 0.6rem);
+    }
+
+    .opp-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      line-height: 1.5;
+      margin-bottom: clamp(0.6rem, 1.2vh, 1.2rem);
+    }
+
+    /* ============================================================
+       SLIDE 9 — CLOSING
+       ============================================================ */
+    .s9 {
+      align-items: center;
+      text-align: center;
+    }
+
+    .s9-bg {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .s9-bg canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .s9-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .s9-h {
+      font-size: var(--fs-h1);
+      line-height: 1;
+      margin-bottom: var(--egap);
+      max-width: 18ch;
+    }
+
+    .s9-sub {
+      font-size: var(--fs-h3);
+      color: var(--text-sec);
+      font-weight: 300;
+      max-width: 52ch;
+      margin-bottom: var(--gap);
+    }
+
+    .s9-foot {
+      position: absolute;
+      bottom: clamp(1.2rem, 2.5vh, 2.5rem);
+      font-size: var(--fs-label);
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      z-index: 1;
+    }
+
+    /* ============================================================
+       SLIDE 2 — HISTORY TIMELINE
+       ============================================================ */
+    .tl-center { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+
+    .tl-wrap {
+      display: flex;
+      align-items: stretch;
+      gap: clamp(1rem, 2vw, 2rem);
+      max-width: min(96vw, 1380px);
+      width: 100%;
+      position: relative;
+      margin-top: var(--gap);
+      flex: 1;
+      min-height: 0;
+    }
+
+    .tl-wrap::before {
+      content: '';
+      position: absolute;
+      top: clamp(22px, 3vw, 36px);
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-hi) 10%, var(--border-hi) 90%, transparent);
+      z-index: 0;
+    }
+
+    .tl-era {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: clamp(1.2rem, 2vw, 2.6rem) clamp(0.8rem, 1.2vw, 1.6rem);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.65s var(--ease-expo), transform 0.65s var(--ease-expo);
+    }
+
+    .slide.on .tl-era:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.1s; }
+    .slide.on .tl-era:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.28s; }
+    .slide.on .tl-era:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.46s; }
+    .slide.on .tl-era:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.64s; }
+
+    .tl-dot {
+      width:  clamp(24px, 3.2vw, 42px);
+      height: clamp(24px, 3.2vw, 42px);
+      border-radius: 50%;
+      border: 2.5px solid var(--border-hi);
+      background: var(--bg);
+      position: relative;
+      z-index: 1;
+      margin-bottom: clamp(1rem, 1.8vh, 2.2rem);
+      flex-shrink: 0;
+    }
+
+    .tl-era:last-child .tl-dot {
+      border-color: var(--accent);
+      box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.5);
+    }
+
+    .tl-year {
+      font-family: var(--font-d);
+      font-size: clamp(1.8rem, 3vw, 3.2rem);
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 0.2em;
+      letter-spacing: -0.03em;
+    }
+
+    .tl-title {
+      font-size: clamp(0.82rem, 1.15vw, 1.05rem);
+      font-weight: 600;
+      color: var(--text-sec);
+      margin-bottom: clamp(0.9rem, 1.5vh, 1.8rem);
+    }
+
+    .tl-items {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.4rem, 0.75vh, 0.9rem);
+      padding: 0 clamp(0.2rem, 0.4vw, 0.4rem);
+    }
+
+    .tl-items li {
+      font-size: clamp(0.78rem, 1.08vw, 0.98rem);
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* ============================================================
+       SLIDE 3 — MANUAL ERA
+       ============================================================ */
+    /* ============================================================
+       SLIDE 6 — COPILOT DEFINITION
+       ============================================================ */
+    .s-def {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .def-glow {
+      position: absolute;
+      width: min(80vw, 800px);
+      height: min(80vw, 800px);
+      top: -35%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(var(--accent-rgb),0.11) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .def-heading {
+      font-family: var(--font-d);
+      font-size: clamp(1.6rem, 3.8vw, 3.8rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      margin-top: var(--egap);
+    }
+
+    .def-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      max-width: 50ch;
+      line-height: 1.7;
+      margin-top: var(--egap);
+      margin-bottom: clamp(1rem, 2.5vh, 2.5rem);
+    }
+
+    .def-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(0.8rem, 1.4vw, 1.4rem);
+      width: 100%;
+      max-width: min(90vw, 1060px);
+    }
+
+    .def-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: clamp(1rem, 1.8vw, 1.8rem);
+      text-align: left;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.65s var(--ease-expo), transform 0.65s var(--ease-expo), border-color 0.2s, background 0.2s;
+    }
+
+    .def-card:hover {
+      background: var(--bg-card-hi);
+      border-color: rgba(var(--accent-rgb), 0.22);
+    }
+
+    .slide.on .def-card:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.30s; }
+    .slide.on .def-card:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.44s; }
+    .slide.on .def-card:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.58s; }
+
+    .def-not {
+      padding-bottom: clamp(0.65rem, 1.1vh, 1.1rem);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: clamp(0.65rem, 1.1vh, 1.1rem);
+    }
+
+    .def-not-lbl {
+      font-size: var(--fs-label);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.3em;
+    }
+
+    .def-not-txt {
+      font-size: clamp(0.78rem, 1.05vw, 0.94rem);
+      color: var(--text-muted);
+      text-decoration: line-through;
+      text-decoration-color: rgba(255,255,255,0.16);
+      line-height: 1.4;
+    }
+
+    .def-is-lbl {
+      font-size: var(--fs-label);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.3em;
+    }
+
+    .def-is-txt {
+      font-family: var(--font-d);
+      font-size: clamp(0.88rem, 1.25vw, 1.08rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    /* ============================================================
+       SLIDE 7 — COPILOT LOOP
+       ============================================================ */
+    .s-loop {
+      display: grid;
+      grid-template-columns: 0.85fr 1.15fr;
+      gap: clamp(2rem, 4vw, 5rem);
+      align-items: center;
+    }
+
+    .loop-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .loop-h {
+      margin-bottom: var(--egap);
+    }
+
+    .loop-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      line-height: 1.65;
+      max-width: 30ch;
+      margin-bottom: clamp(0.8rem, 1.8vh, 1.8rem);
+    }
+
+    .loop-tagline {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+      line-height: 1.55;
+      max-width: 28ch;
+      padding-left: 1em;
+      border-left: 2px solid rgba(var(--accent-rgb), 0.3);
+    }
+
+    .loop-right {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .loop-step {
+      display: grid;
+      grid-template-columns: clamp(2rem, 3.2vw, 3.2rem) 1fr;
+      gap: clamp(0.8rem, 1.3vw, 1.3rem);
+      opacity: 0;
+      transform: translateX(22px);
+      transition: opacity 0.6s var(--ease-expo), transform 0.6s var(--ease-expo);
+    }
+
+    .slide.on .loop-step:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.15s; }
+    .slide.on .loop-step:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.30s; }
+    .slide.on .loop-step:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.45s; }
+    .slide.on .loop-step:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.60s; }
+
+    .loop-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .loop-dot {
+      width:  clamp(1.9rem, 2.8vw, 2.8rem);
+      height: clamp(1.9rem, 2.8vw, 2.8rem);
+      border-radius: 50%;
+      background: var(--bg-card-hi);
+      border: 1.5px solid var(--border-hi);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-d);
+      font-size: var(--fs-sm);
+      font-weight: 800;
+      color: var(--text-sec);
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .loop-step.ai-step .loop-dot {
+      background: rgba(var(--accent-rgb), 0.1);
+      border-color: rgba(var(--accent-rgb), 0.38);
+      color: var(--accent);
+      box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.15);
+    }
+
+    .loop-line {
+      width: 1.5px;
+      flex: 1;
+      min-height: clamp(0.8rem, 1.5vh, 1.5rem);
+      background: linear-gradient(to bottom, var(--border-hi), transparent);
+    }
+
+    .loop-step:last-child .loop-line { display: none; }
+
+    .loop-content {
+      padding-top: 0.08em;
+      padding-bottom: clamp(0.8rem, 1.6vh, 1.6rem);
+    }
+
+    .loop-step:last-child .loop-content { padding-bottom: 0; }
+
+    .loop-role {
+      font-size: var(--fs-label);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.25em;
+    }
+
+    .loop-step.ai-step .loop-role { color: var(--accent); }
+
+    .loop-step-title {
+      font-family: var(--font-d);
+      font-size: clamp(0.88rem, 1.3vw, 1.1rem);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.22em;
+      line-height: 1.3;
+    }
+
+    .loop-step-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      line-height: 1.55;
+      max-width: 34ch;
+    }
+
+    .loop-return {
+      display: flex;
+      align-items: center;
+      gap: 0.6em;
+      margin-top: clamp(0.5rem, 1vh, 1rem);
+      padding-left: clamp(2rem, 3.2vw, 3.2rem);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.5s var(--ease-expo), transform 0.5s var(--ease-expo);
+    }
+
+    .slide.on .loop-return { opacity: 1; transform: none; transition-delay: 0.80s; }
+
+    .loop-return-line {
+      flex: 1;
+      height: 1.5px;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(var(--accent-rgb), 0.28) 0px,
+        rgba(var(--accent-rgb), 0.28) 4px,
+        transparent 4px,
+        transparent 8px
+      );
+    }
+
+    .loop-return-text {
+      font-size: var(--fs-label);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(var(--accent-rgb), 0.55);
+      white-space: nowrap;
+    }
+
+    /* ============================================================
+       SLIDE 6 — WHY NOW
+       ============================================================ */
+    .s-whynow {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .wn-glow {
+      position: absolute;
+      width: min(80vw, 800px);
+      height: min(80vw, 800px);
+      top: -35%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(var(--accent-rgb),0.10) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wn-h {
+      margin-top: var(--egap);
+    }
+
+    .wn-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      max-width: 50ch;
+      line-height: 1.7;
+      margin-top: var(--egap);
+      margin-bottom: clamp(1rem, 2.5vh, 2.5rem);
+    }
+
+    .wn-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(0.8rem, 1.4vw, 1.4rem);
+      width: 100%;
+      max-width: min(90vw, 1060px);
+    }
+
+    .wn-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: clamp(1rem, 1.8vw, 1.8rem);
+      text-align: left;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.65s var(--ease-expo), transform 0.65s var(--ease-expo), border-color 0.2s, background 0.2s;
+    }
+
+    .wn-card:hover {
+      background: var(--bg-card-hi);
+      border-color: rgba(var(--accent-rgb), 0.22);
+    }
+
+    .slide.on .wn-card:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.30s; }
+    .slide.on .wn-card:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.44s; }
+    .slide.on .wn-card:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.58s; }
+
+    /* Numbered badge — shared by Why Now and Opportunity */
+    .wn-num, .opp-num {
+      width: clamp(2rem, 3vw, 3rem);
+      height: clamp(2rem, 3vw, 3rem);
+      border-radius: 50%;
+      background: rgba(var(--accent-rgb), 0.08);
+      border: 1px solid rgba(var(--accent-rgb), 0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-d);
+      font-size: clamp(0.68rem, 1vw, 0.88rem);
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 0.8em;
+      flex-shrink: 0;
+    }
+
+    /* "Before" section — mirrors def-not */
+    .wn-before {
+      padding-bottom: clamp(0.65rem, 1.1vh, 1.1rem);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: clamp(0.65rem, 1.1vh, 1.1rem);
+    }
+
+    .wn-before-lbl {
+      font-size: var(--fs-label);
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.3em;
+    }
+
+    .wn-before-txt {
+      font-size: clamp(0.78rem, 1.05vw, 0.94rem);
+      color: var(--text-muted);
+      text-decoration: line-through;
+      text-decoration-color: rgba(255,255,255,0.16);
+      line-height: 1.4;
+    }
+
+    /* "Now" section — mirrors def-is */
+    .wn-after-lbl {
+      font-size: var(--fs-label);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.3em;
+    }
+
+    .wn-after-txt {
+      font-family: var(--font-d);
+      font-size: clamp(0.88rem, 1.25vw, 1.08rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    /* ============================================================
+       SLIDE 8 — COPILOT ORIGIN
+       ============================================================ */
+    .s-origin {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr;
+      gap: clamp(2rem, 4vw, 5rem);
+      align-items: center;
+    }
+
+    .orig-h {
+      font-family: var(--font-d);
+      font-size: var(--fs-h2);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+      margin-bottom: var(--egap);
+    }
+
+    .orig-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      line-height: 1.6;
+      margin-bottom: var(--gap);
+      max-width: 34ch;
+    }
+
+    .orig-quote {
+      border-left: 2px solid var(--accent);
+      padding-left: 0.9em;
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    .milestones {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(0.85rem, 1.6vh, 2rem);
+    }
+
+    .ms {
+      display: flex;
+      align-items: flex-start;
+      gap: clamp(0.8rem, 1.4vw, 1.6rem);
+      opacity: 0;
+      transform: translateX(24px);
+      transition: opacity 0.65s var(--ease-expo), transform 0.65s var(--ease-expo);
+    }
+
+    .slide.on .ms:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.2s; }
+    .slide.on .ms:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.38s; }
+    .slide.on .ms:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.56s; }
+    .slide.on .ms:nth-child(4) { opacity: 1; transform: none; transition-delay: 0.74s; }
+
+    .ms-year {
+      font-family: var(--font-d);
+      font-size: clamp(1rem, 1.5vw, 1.5rem);
+      font-weight: 800;
+      color: var(--accent);
+      min-width: 4.5em;
+      padding-top: 0.15em;
+      flex-shrink: 0;
+    }
+
+    .ms-body {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: clamp(0.8rem, 1.3vw, 1.6rem);
+    }
+
+    .ms-title {
+      font-size: clamp(0.88rem, 1.2vw, 1.1rem);
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.3em;
+    }
+
+    .ms-desc {
+      font-size: clamp(0.74rem, 0.98vw, 0.92rem);
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ============================================================
+       SLIDE 9 — THE COPILOT MOMENT
+       ============================================================ */
+    .s-moment {
+      align-items: center;
+      text-align: center;
+    }
+
+    .moment-big {
+      font-family: var(--font-d);
+      font-size: clamp(4rem, 14vw, 13rem);
+      font-weight: 800;
+      line-height: 0.9;
+      letter-spacing: -0.05em;
+      color: var(--text);
+    }
+
+    .moment-big .acc { color: var(--accent); }
+
+    .moment-label {
+      font-size: var(--fs-h3);
+      color: var(--text-sec);
+      font-weight: 300;
+      margin-top: 0.3em;
+      margin-bottom: var(--gap);
+    }
+
+    .moment-stats {
+      display: flex;
+      gap: clamp(1.5rem, 3vw, 4rem);
+      justify-content: center;
+    }
+
+    .moment-stat {
+      text-align: center;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.65s var(--ease-expo), transform 0.65s var(--ease-expo);
+    }
+
+    .slide.on .moment-stat:nth-child(1) { opacity: 1; transform: none; transition-delay: 0.5s; }
+    .slide.on .moment-stat:nth-child(2) { opacity: 1; transform: none; transition-delay: 0.68s; }
+    .slide.on .moment-stat:nth-child(3) { opacity: 1; transform: none; transition-delay: 0.86s; }
+
+    .moment-stat-n {
+      font-family: var(--font-d);
+      font-size: clamp(1.4rem, 3vw, 2.6rem);
+      font-weight: 800;
+      color: var(--blue);
+    }
+
+    .moment-stat-d {
+      font-size: var(--fs-sm);
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       RESPONSIVE BREAKPOINTS (from viewport-base.css)
+       ============================================================ */
+    @media (max-height: 700px) {
+      :root {
+        --pad:  clamp(0.8rem, 3vw, 2.2rem);
+        --gap:  clamp(0.5rem, 1.4vw, 1.2rem);
+        --fs-h1:    clamp(1.5rem, 4.5vw, 3rem);
+        --fs-h2:    clamp(1.1rem, 2.8vw, 2rem);
+        --fs-counter: clamp(3.5rem, 12vw, 9rem);
+      }
+    }
+
+    @media (max-height: 600px) {
+      :root {
+        --pad:  clamp(0.5rem, 2.5vw, 1.5rem);
+        --gap:  clamp(0.4rem, 1vw, 0.8rem);
+        --fs-body:  clamp(0.68rem, 1vw, 0.86rem);
+        --fs-counter: clamp(3rem, 10vw, 7rem);
+      }
+      #dots, #hint, .snum { display: none; }
+    }
+
+    @media (max-height: 500px) {
+      :root {
+        --pad:    clamp(0.4rem, 2vw, 1rem);
+        --fs-h1:  clamp(1rem, 3.5vw, 1.5rem);
+        --fs-h2:  clamp(0.9rem, 2.5vw, 1.25rem);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .s2, .cs, .s-loop { grid-template-columns: 1fr; }
+      .def-cards, .wn-cards { grid-template-columns: 1fr; }
+      .p-cards, .opp-cards, .moment-stats { flex-direction: column; }
+      .tl-wrap { flex-direction: column; gap: var(--egap); }
+      .tl-wrap::before { display: none; }
+      .tl-era { flex-direction: row; align-items: center; text-align: left; gap: 0.8em; }
+      .tl-dot { margin-bottom: 0; flex-shrink: 0; }
+      .nodes { flex-direction: column; gap: var(--egap); }
+      .nconn {
+        width: 1px;
+        height: clamp(2rem, 4vh, 4rem);
+        align-self: center;
+      }
+      .nconn::before { background: linear-gradient(180deg, rgba(255,255,255,0.08), var(--accent)); }
+      .nconn::after {
+        right: auto;
+        left: -4px;
+        top: auto;
+        bottom: -1px;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 8px solid var(--accent);
+        border-bottom: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+      }
+    }
+
+    /* ============================================================
+       SLIDE — INDUSTRY ADOPTION (Barclays, Morgan Stanley, etc.)
+       ============================================================ */
+    .ind-slide {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .ind-h {
+      font-family: var(--font-d);
+      font-size: var(--fs-h2);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: var(--egap);
+    }
+
+    .ind-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      margin-bottom: var(--gap);
+      max-width: 52ch;
+    }
+
+    .ind-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(0.8rem, 1.4vw, 1.4rem);
+      max-width: min(88vw, 980px);
+      width: 100%;
+    }
+
+    .ind-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: clamp(1rem, 1.8vw, 1.8rem);
+      text-align: left;
+    }
+
+    .ind-co {
+      font-size: var(--fs-label);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.45em;
+    }
+
+    .ind-result {
+      font-family: var(--font-d);
+      font-size: clamp(1rem, 1.8vw, 1.5rem);
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1.1;
+      margin-bottom: 0.4em;
+    }
+
+    .ind-what {
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      line-height: 1.5;
+    }
+
+    /* ============================================================
+       SLIDE — RESEARCH BACKING (Gartner, McKinsey, Forrester…)
+       ============================================================ */
+    .res-slide {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .res-h {
+      font-family: var(--font-d);
+      font-size: var(--fs-h2);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: var(--gap);
+    }
+
+    .res-row {
+      display: flex;
+      gap: clamp(0.6rem, 1vw, 1rem);
+      max-width: min(96vw, 1160px);
+      width: 100%;
+    }
+
+    .res-card {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: clamp(1rem, 1.6vw, 1.6rem);
+      text-align: left;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s var(--ease-expo), transform 0.7s var(--ease-expo);
+    }
+
+    .slide.on .res-card:nth-child(1) { opacity:1; transform:none; transition-delay: 0.10s; }
+    .slide.on .res-card:nth-child(2) { opacity:1; transform:none; transition-delay: 0.22s; }
+    .slide.on .res-card:nth-child(3) { opacity:1; transform:none; transition-delay: 0.34s; }
+    .slide.on .res-card:nth-child(4) { opacity:1; transform:none; transition-delay: 0.46s; }
+    .slide.on .res-card:nth-child(5) { opacity:1; transform:none; transition-delay: 0.58s; }
+
+    .res-firm {
+      font-size: var(--fs-label);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.5em;
+    }
+
+    .res-stat {
+      font-family: var(--font-d);
+      font-size: clamp(1.6rem, 3.2vw, 2.8rem);
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 0.4em;
+    }
+
+    .res-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      line-height: 1.5;
+    }
+    /* ============================================================
+       SLIDE — COMBINED PROOF (industry + research)
+       ============================================================ */
+    .s-proof {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .proof-h {
+      margin-bottom: var(--egap);
+    }
+
+    .proof-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      margin-bottom: var(--gap);
+      max-width: 48ch;
+    }
+
+    .proof-companies {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(0.65rem, 1.1vw, 1.1rem);
+      max-width: min(96vw, 1100px);
+      width: 100%;
+      margin-bottom: clamp(0.7rem, 1.4vh, 1.4rem);
+    }
+
+    .proof-co {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: clamp(0.8rem, 1.4vw, 1.4rem);
+      text-align: left;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s var(--ease-expo), transform 0.6s var(--ease-expo);
+    }
+
+    .slide.on .proof-co:nth-child(1) { opacity:1; transform:none; transition-delay: 0.18s; }
+    .slide.on .proof-co:nth-child(2) { opacity:1; transform:none; transition-delay: 0.30s; }
+    .slide.on .proof-co:nth-child(3) { opacity:1; transform:none; transition-delay: 0.42s; }
+    .slide.on .proof-co:nth-child(4) { opacity:1; transform:none; transition-delay: 0.54s; }
+
+    .proof-co-name {
+      font-size: var(--fs-label);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.4em;
+    }
+
+    .proof-co-result {
+      font-family: var(--font-d);
+      font-size: clamp(0.9rem, 1.5vw, 1.3rem);
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1.15;
+      margin-bottom: 0.35em;
+    }
+
+    .proof-co-what {
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      line-height: 1.45;
+    }
+
+    .proof-stats {
+      display: flex;
+      gap: clamp(1rem, 2.5vw, 3rem);
+      justify-content: center;
+      align-items: center;
+      padding: clamp(0.65rem, 1.2vw, 1rem) clamp(1.4rem, 3vw, 3rem);
+      background: rgba(var(--accent-rgb), 0.04);
+      border: 1px solid rgba(var(--accent-rgb), 0.12);
+      border-radius: 14px;
+      max-width: min(96vw, 1100px);
+      width: 100%;
+      opacity: 0;
+      transform: translateY(14px);
+      transition: opacity 0.6s var(--ease-expo), transform 0.6s var(--ease-expo);
+    }
+
+    .slide.on .proof-stats { opacity:1; transform:none; transition-delay: 0.7s; }
+
+    .proof-stat {
+      text-align: center;
+    }
+
+    .proof-stat-firm {
+      font-size: var(--fs-label);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.2em;
+    }
+
+    .proof-stat-n {
+      font-family: var(--font-d);
+      font-size: clamp(1.2rem, 2.2vw, 1.9rem);
+      font-weight: 800;
+      color: var(--blue);
+      line-height: 1;
+    }
+
+    .proof-stat-d {
+      font-size: clamp(0.6rem, 0.82vw, 0.76rem);
+      color: var(--text-muted);
+      max-width: 16ch;
+      margin-top: 0.2em;
+      line-height: 1.35;
+    }
+
+    .proof-divider {
+      width: 1px;
+      height: clamp(2rem, 3.5vh, 3.5rem);
+      background: var(--border-hi);
+      flex-shrink: 0;
+    }
+
+    /* ============================================================
+       SLIDE — DH VISION (Copilots at Delivery Hero)
+       ============================================================ */
+    .s-dhvision {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .dhv-top {
+      text-align: center;
+      margin-bottom: clamp(0.6rem, 1.4vh, 1.4rem);
+    }
+
+    .dhv-h {
+      margin-bottom: var(--egap);
+    }
+
+    .dhv-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      max-width: 52ch;
+    }
+
+    .dhv-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: clamp(0.8rem, 1.4vw, 1.4rem);
+      max-width: min(96vw, 1060px);
+      width: 100%;
+    }
+
+    .dhv-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: clamp(1rem, 1.8vw, 1.8rem);
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.65s var(--ease-expo), transform 0.65s var(--ease-expo), border-color 0.2s;
+    }
+
+    .dhv-card:hover { border-color: rgba(var(--accent-rgb), 0.25); }
+
+    .slide.on .dhv-card:nth-child(1) { opacity:1; transform:none; transition-delay: 0.15s; }
+    .slide.on .dhv-card:nth-child(2) { opacity:1; transform:none; transition-delay: 0.28s; }
+    .slide.on .dhv-card:nth-child(3) { opacity:1; transform:none; transition-delay: 0.41s; }
+    .slide.on .dhv-card:nth-child(4) { opacity:1; transform:none; transition-delay: 0.54s; }
+
+    /* Thin accent bar top-left corner */
+    .dhv-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 40px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 0 0 2px 0;
+    }
+
+    .dhv-tool {
+      font-size: var(--fs-label);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.3em;
+    }
+
+    .dhv-role {
+      font-size: var(--fs-label);
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.6em;
+    }
+
+    .dhv-title {
+      font-family: var(--font-d);
+      font-size: clamp(0.88rem, 1.3vw, 1.1rem);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.35em;
+      line-height: 1.25;
+    }
+
+    .dhv-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      line-height: 1.5;
+      margin-bottom: 0.7em;
+    }
+
+    .dhv-impact {
+      font-family: var(--font-d);
+      font-size: var(--fs-sm);
+      font-weight: 800;
+      color: var(--accent);
+      background: rgba(var(--accent-rgb), 0.07);
+      border: 1px solid rgba(var(--accent-rgb), 0.16);
+      border-radius: 6px;
+      padding: 0.22em 0.65em;
+      display: inline-block;
+    }
+
+    /* ============================================================
+       SLIDE — NEXT STEPS
+       ============================================================ */
+    .s-nextsteps {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: clamp(2rem, 4vw, 5rem);
+      align-items: center;
+    }
+
+    .ns-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ns-h {
+      margin-bottom: var(--egap);
+    }
+
+    .ns-sub {
+      font-size: var(--fs-body);
+      color: var(--text-sec);
+      line-height: 1.65;
+      max-width: 30ch;
+      margin-bottom: clamp(0.8rem, 1.8vh, 1.8rem);
+    }
+
+    .ns-cta {
+      font-family: var(--font-d);
+      font-size: var(--fs-sm);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.5;
+      max-width: 28ch;
+      padding: clamp(0.8rem, 1.4vw, 1.2rem);
+      border: 1px solid rgba(var(--accent-rgb), 0.28);
+      border-radius: 12px;
+      background: rgba(var(--accent-rgb), 0.05);
+    }
+
+    .ns-right {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .ns-phase {
+      display: grid;
+      grid-template-columns: clamp(2.2rem, 3.5vw, 3.5rem) 1fr;
+      gap: clamp(0.9rem, 1.4vw, 1.4rem);
+      opacity: 0;
+      transform: translateX(22px);
+      transition: opacity 0.6s var(--ease-expo), transform 0.6s var(--ease-expo);
+    }
+
+    .slide.on .ns-phase:nth-child(1) { opacity:1; transform:none; transition-delay: 0.15s; }
+    .slide.on .ns-phase:nth-child(2) { opacity:1; transform:none; transition-delay: 0.32s; }
+    .slide.on .ns-phase:nth-child(3) { opacity:1; transform:none; transition-delay: 0.49s; }
+
+    .ns-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .ns-dot {
+      width: clamp(2rem, 3.2vw, 3.2rem);
+      height: clamp(2rem, 3.2vw, 3.2rem);
+      border-radius: 50%;
+      background: rgba(var(--accent-rgb), 0.1);
+      border: 1.5px solid rgba(var(--accent-rgb), 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-d);
+      font-size: var(--fs-sm);
+      font-weight: 800;
+      color: var(--accent);
+      flex-shrink: 0;
+      box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.12);
+    }
+
+    .ns-line {
+      width: 1.5px;
+      flex: 1;
+      min-height: clamp(0.8rem, 1.8vh, 1.8rem);
+      background: linear-gradient(to bottom, rgba(var(--accent-rgb), 0.3), transparent);
+    }
+
+    .ns-phase:last-child .ns-line { display: none; }
+
+    .ns-content {
+      padding-top: 0.1em;
+      padding-bottom: clamp(1rem, 2vh, 2rem);
+    }
+
+    .ns-phase:last-child .ns-content { padding-bottom: 0; }
+
+    .ns-timeframe {
+      font-size: var(--fs-label);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.25em;
+    }
+
+    .ns-phase-title {
+      font-family: var(--font-d);
+      font-size: clamp(0.9rem, 1.35vw, 1.15rem);
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.28em;
+      line-height: 1.25;
+    }
+
+    .ns-phase-desc {
+      font-size: var(--fs-sm);
+      color: var(--text-sec);
+      line-height: 1.55;
+      max-width: 36ch;
+    }
+
+    /* Responsive updates for new slides */
+    @media (max-width: 768px) {
+      .s-nextsteps { grid-template-columns: 1fr; }
+      .s-dhvision .dhv-grid { grid-template-columns: 1fr; }
+      .opp-cards { grid-template-columns: 1fr; }
+      .proof-companies { grid-template-columns: repeat(2, 1fr); }
+      .proof-stats { flex-wrap: wrap; gap: 1rem; }
+      .proof-divider { display: none; }
+    }
+  </style>
+</head>
+<body>
+<!-- Progress bar -->
+<div aria-hidden="true" id="progress"></div>
+<!-- Navigation dots -->
+<nav aria-label="Slide navigation" id="dots"></nav>
+<!-- Keyboard hint -->
+<div aria-hidden="true" id="hint">← → navigate</div>
+<!-- ============================================================
+       SLIDE DECK
+       ============================================================ -->
+<div id="deck">
+<!-- ──────────────────────────────────────────────
+         SLIDE 0 — COVER
+         ────────────────────────────────────────────── -->
+<section aria-label="Cover slide" class="slide s-cover" id="s-cover">
+<div aria-hidden="true" class="snum">01 / 18</div>
+<div aria-hidden="true" class="cover-bg-glow"></div>
+<div class="cover-inner">
+<div class="cover-eyebrow rv" data-d="1">Delivery Hero · Internal Tools</div>
+<h1 class="cover-title rv" data-d="2">
+          AI Copilots for<br/>
+          Backoffice &amp;<br/>
+          Internal Tools
+        </h1>
+<p class="cover-desc rv" data-d="3">
+          How intelligent assistance is reshaping the way sales, onboarding, QC, and account teams work — every day.
+        </p>
+<div class="cover-divider rv" data-d="4"></div>
+<div class="cover-author rv" data-d="5">
+<!-- PHOTO: Replace the <div class="cover-avatar">FA</div> below with
+               <div class="cover-avatar"><img src="your-photo.jpg" alt="Farzam Anjum"></div>
+               to show your actual photo. The circle crop is handled by CSS. -->
+<div class="cover-avatar">FA</div>
+<div class="cover-author-meta">
+<span class="cover-author-name">Prepared by Farzam Anjum</span>
+<span class="cover-author-role">Senior Product Designer</span>
+</div>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 1 — HOOK
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 1: Backoffice is broken" class="slide" id="s1">
+<div aria-hidden="true" class="snum">02 / 18</div>
+<div class="slide-source">
+<a class="source-tag" href="https://www.microsoft.com/en-us/worklab/work-trend-index" rel="noopener noreferrer" target="_blank">
+<span class="src-logo">
+<svg viewbox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#f25022" height="9.5" width="9.5" x="0" y="0"></rect>
+<rect fill="#7fba00" height="9.5" width="9.5" x="11.5" y="0"></rect>
+<rect fill="#00a4ef" height="9.5" width="9.5" x="0" y="11.5"></rect>
+<rect fill="#ffb900" height="9.5" width="9.5" x="11.5" y="11.5"></rect>
+</svg>
+</span>
+          Microsoft Work Trend Index, April 2025
+        </a>
+</div>
+<div aria-hidden="true" class="s1-glow"></div>
+<!-- Left column -->
+<div class="s1-left">
+<div class="rv" data-d="1">
+<div aria-label="57 percent" class="s1-counter">
+<span id="cnt57">0</span><span class="acc">%</span>
+</div>
+<div class="s1-clabel">of your team's time goes to meetings,<br/>email, and chat — not actual work.</div>
+</div>
+<div class="s1-facts rv" data-d="2">
+<div class="s1-fact">
+<div class="s1-fact-n">275<span class="fact-unit">×/day</span></div>
+<div class="s1-fact-d">interruptions per worker — a meeting, email, or chat every 2 minutes</div>
+</div>
+<div class="s1-fact">
+<div class="s1-fact-n">80<span class="fact-unit">%</span></div>
+<div class="s1-fact-d">of the global workforce say they lack the time and energy to do their actual job</div>
+</div>
+<div class="s1-fact">
+<div class="s1-fact-n">48<span class="fact-unit">%</span></div>
+<div class="s1-fact-d">of employees describe their workday as chaotic and fragmented</div>
+</div>
+</div>
+</div>
+<!-- Right column: 10×10 square grid -->
+<div class="s1-right rv" data-d="3">
+<div class="s1-grid-label">Each square = 1% of your team's working week</div>
+<div class="s1-grid" id="s1-grid"></div>
+<div class="s1-legend">
+<div class="s1-leg"><div class="s1-leg-dot waste"></div>57% communication overhead</div>
+<div class="s1-leg"><div class="s1-leg-dot real"></div>43% actual output</div>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 3 — THE PROBLEM
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 3: Manual work is killing velocity" class="slide s2" id="s2">
+<div aria-hidden="true" class="snum">03 / 18</div>
+<div class="slide-source">
+<a class="source-tag" href="https://www.mckinsey.com/featured-insights/future-of-work/the-future-of-work-after-covid-19" rel="noopener noreferrer" target="_blank">
+<span class="src-logo" style="background:#fff;">
+<svg viewbox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#fff" height="80" width="80"></rect>
+<text dominant-baseline="middle" fill="#00A3E0" font-family="Georgia,serif" font-size="52" text-anchor="middle" x="50%" y="56%">M</text>
+</svg>
+</span>
+          McKinsey Global Institute — The Future of Work, 2023
+        </a>
+<a class="source-tag" href="https://www.salesforce.com/resources/research-reports/state-of-sales/" rel="noopener noreferrer" target="_blank">
+<span class="src-logo" style="background:#00A1E0;">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#fff"></path>
+</svg>
+</span>
+          Salesforce State of Sales, 6th Edition
+        </a>
+</div>
+<div>
+<div class="lbl rv" data-d="1">The Problem</div>
+<h2 class="s2-h def-heading rv" data-d="2">Manual work is<br/>killing velocity.</h2>
+<p class="s2-sub rv" data-d="3">CRM updates. Ticket routing. Data entry. Copy-paste workflows. Every hour spent here is an hour not spent on growth.</p>
+</div>
+<div class="rv" data-d="4">
+<div class="legend">
+<div class="leg-item"><div class="leg-dot m"></div><span>Manual / repetitive</span></div>
+<div class="leg-item"><div class="leg-dot s"></div><span>Strategic / high-value</span></div>
+</div>
+<div class="bar-rows" role="list">
+<div class="brow" role="listitem">
+<div class="brow-lbl"><span>Sales Rep</span><span>65% manual</span></div>
+<div class="btrack" title="Manual work"><div class="bfill m" style="--tw:65%"></div></div>
+<div class="btrack" title="Strategic work"><div class="bfill s" style="--tw:35%"></div></div>
+</div>
+<div class="brow" role="listitem">
+<div class="brow-lbl"><span>Account Manager</span><span>62% manual</span></div>
+<div class="btrack"><div class="bfill m" style="--tw:62%"></div></div>
+<div class="btrack"><div class="bfill s" style="--tw:38%"></div></div>
+</div>
+<div class="brow" role="listitem">
+<div class="brow-lbl"><span>Onboarding Agent</span><span>70% manual</span></div>
+<div class="btrack"><div class="bfill m" style="--tw:70%"></div></div>
+<div class="btrack"><div class="bfill s" style="--tw:30%"></div></div>
+</div>
+<div class="brow" role="listitem">
+<div class="brow-lbl"><span>QC Agent</span><span>68% manual</span></div>
+<div class="btrack"><div class="bfill m" style="--tw:68%"></div></div>
+<div class="btrack"><div class="bfill s" style="--tw:32%"></div></div>
+</div>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 4 — A BRIEF HISTORY
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 4: A Brief History" class="slide tl-center" id="s-hist">
+<div aria-hidden="true" class="snum">04 / 18</div>
+<div class="lbl rv" data-d="1">A Brief History</div>
+<h2 class="def-heading rv" data-d="2" style="margin-bottom:var(--egap);">Something big<br/>changed in 2023.</h2>
+<p class="rv" data-d="3" style="font-size:var(--fs-body);color:var(--text-sec);margin-bottom:var(--egap);max-width:52ch;">Four eras. Each one made us faster at doing the same manual work. Then one year broke the pattern entirely.</p>
+<div class="tl-wrap rv" data-d="4">
+<div class="tl-era">
+<div class="tl-dot"></div>
+<div class="tl-year">1990s</div>
+<div class="tl-title">The Paper Era</div>
+<ul class="tl-items">
+<li>Excel spreadsheets</li>
+<li>Email &amp; fax</li>
+<li>Manual filing</li>
+<li>Phone call logs</li>
+</ul>
+</div>
+<div class="tl-era">
+<div class="tl-dot"></div>
+<div class="tl-year">2000s</div>
+<div class="tl-title">The Database Era</div>
+<ul class="tl-items">
+<li>First CRM systems</li>
+<li>ERP platforms</li>
+<li>Ticketing software</li>
+<li>Data warehouses</li>
+</ul>
+</div>
+<div class="tl-era">
+<div class="tl-dot"></div>
+<div class="tl-year">2010s</div>
+<div class="tl-title">The SaaS Era</div>
+<ul class="tl-items">
+<li>Salesforce, HubSpot</li>
+<li>Zendesk, Jira</li>
+<li>Slack, Notion</li>
+<li>12+ tools per team</li>
+</ul>
+</div>
+<div class="tl-era" style="border-color:rgba(var(--accent-rgb),0.4);background:rgba(var(--accent-rgb),0.07);">
+<div class="tl-dot" style="background:var(--accent);border-color:var(--accent);box-shadow:0 0 16px rgba(var(--accent-rgb),0.6);"></div>
+<div class="tl-year" style="color:var(--accent);">2023+</div>
+<div class="tl-title" style="color:var(--text);font-weight:700;">The Copilot Era</div>
+<ul class="tl-items">
+<li>AI embedded in tools</li>
+<li>Context-aware agents</li>
+<li>Proactive suggestions</li>
+<li>Zero manual entry</li>
+</ul>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 5 — WHY NOW
+         ────────────────────────────────────────────── -->
+    <section aria-label="Slide 5: Why AI copilots are emerging now" class="slide s-whynow" id="s-whynow">
+<div aria-hidden="true" class="snum">05 / 18</div>
+<div aria-hidden="true" class="wn-glow"></div>
+<div class="lbl rv" data-d="1">Why Now</div>
+<h2 class="wn-h def-heading rv" data-d="2">Three forces converged<br/>at exactly the right time.</h2>
+<p class="wn-sub rv" data-d="3">None of these existed five years ago at the scale needed to deploy enterprise copilots.</p>
+<div class="wn-cards">
+  <div class="wn-card">
+    <div class="wn-num">01</div>
+    <div class="wn-before">
+      <div class="wn-before-lbl">Before</div>
+      <div class="wn-before-txt">Keyword search and rigid rules — AI couldn't understand context or intent</div>
+    </div>
+    <div class="wn-after">
+      <div class="wn-after-lbl">Foundation Models</div>
+      <div class="wn-after-txt">GPT-4 class LLMs reason through context and nuance — not just match keywords</div>
+    </div>
+  </div>
+  <div class="wn-card">
+    <div class="wn-num">02</div>
+    <div class="wn-before">
+      <div class="wn-before-lbl">Before</div>
+      <div class="wn-before-txt">AI lived in a separate tab — high context-switching cost, low adoption</div>
+    </div>
+    <div class="wn-after">
+      <div class="wn-after-lbl">Embedded UX Patterns</div>
+      <div class="wn-after-txt">Copilot, Sidekick, Einstein — AI built directly into the tools your team already uses</div>
+    </div>
+  </div>
+  <div class="wn-card">
+    <div class="wn-num">03</div>
+    <div class="wn-before">
+      <div class="wn-before-lbl">Before</div>
+      <div class="wn-before-txt">Siloed spreadsheets and unstructured data — nothing for AI to reason against</div>
+    </div>
+    <div class="wn-after">
+      <div class="wn-after-lbl">Enterprise Data Readiness</div>
+      <div class="wn-after-txt">A decade of SaaS adoption means structured data is ready — copilots can tap it on day one</div>
+    </div>
+  </div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 6 — COPILOT DEFINITION
+         ────────────────────────────────────────────── -->
+    <section aria-label="Slide 6: What is an AI Copilot" class="slide s-def" id="s-def">
+<div aria-hidden="true" class="snum">06 / 18</div>
+<div aria-hidden="true" class="def-glow"></div>
+<div class="lbl rv" data-d="1">Copilot Defined</div>
+<h2 class="def-heading rv" data-d="2">Not a bot.<br/>Not automation.<br/>Your most capable teammate.</h2>
+<p class="def-sub rv" data-d="3">A copilot lives inside your existing tool — it watches, suggests, and acts only when you say so.</p>
+<div class="def-cards">
+  <div class="def-card">
+    <div class="def-not">
+      <div class="def-not-lbl">What it's not</div>
+      <div class="def-not-txt">ChatGPT in yet another tab</div>
+    </div>
+    <div class="def-is">
+      <div class="def-is-lbl">What it is</div>
+      <div class="def-is-txt">Embedded directly in the tool you're already using</div>
+    </div>
+  </div>
+  <div class="def-card">
+    <div class="def-not">
+      <div class="def-not-lbl">What it's not</div>
+      <div class="def-not-txt">A robot that replaces your team</div>
+    </div>
+    <div class="def-is">
+      <div class="def-is-lbl">What it is</div>
+      <div class="def-is-txt">A multiplier that makes every person 10× more effective</div>
+    </div>
+  </div>
+  <div class="def-card">
+    <div class="def-not">
+      <div class="def-not-lbl">What it's not</div>
+      <div class="def-not-txt">A rigid script that just follows commands</div>
+    </div>
+    <div class="def-is">
+      <div class="def-is-lbl">What it is</div>
+      <div class="def-is-txt">Context-aware — reads your workflow, not just your prompts</div>
+    </div>
+  </div>
+</div>
+</section>
+
+    <!-- ──────────────────────────────────────────────
+         SLIDE 7 — THE COPILOT LOOP
+         ────────────────────────────────────────────── -->
+    <section aria-label="Slide 7: The copilot loop" class="slide s-loop" id="s-loop">
+<div aria-hidden="true" class="snum">07 / 18</div>
+<div class="loop-left">
+  <div class="lbl rv" data-d="1">How it works</div>
+  <h2 class="loop-h def-heading rv" data-d="2">One loop.<br/>Infinite leverage.</h2>
+  <p class="loop-sub rv" data-d="3">Every copilot interaction follows the same four-step cycle — and gets smarter with each pass.</p>
+  <p class="loop-tagline rv" data-d="4">You stay in control at every step. The copilot handles the burden.</p>
+</div>
+<div class="loop-right">
+  <div class="loop-step">
+    <div class="loop-node">
+      <div class="loop-dot">1</div>
+      <div class="loop-line"></div>
+    </div>
+    <div class="loop-content">
+      <div class="loop-role">You</div>
+      <div class="loop-step-title">Task arrives</div>
+      <div class="loop-step-desc">A vendor request, a QC flag, a client call — the copilot sees it the moment you do.</div>
+    </div>
+  </div>
+  <div class="loop-step ai-step">
+    <div class="loop-node">
+      <div class="loop-dot">2</div>
+      <div class="loop-line"></div>
+    </div>
+    <div class="loop-content">
+      <div class="loop-role">AI</div>
+      <div class="loop-step-title">Reads context</div>
+      <div class="loop-step-desc">Pulls history, data, and requirements from your systems — in milliseconds, not minutes.</div>
+    </div>
+  </div>
+  <div class="loop-step ai-step">
+    <div class="loop-node">
+      <div class="loop-dot">3</div>
+      <div class="loop-line"></div>
+    </div>
+    <div class="loop-content">
+      <div class="loop-role">AI</div>
+      <div class="loop-step-title">Drafts a suggestion</div>
+      <div class="loop-step-desc">A pre-filled response, a flagged anomaly, a recommended next action — ready for your review.</div>
+    </div>
+  </div>
+  <div class="loop-step">
+    <div class="loop-node">
+      <div class="loop-dot">4</div>
+      <div class="loop-line"></div>
+    </div>
+    <div class="loop-content">
+      <div class="loop-role">You</div>
+      <div class="loop-step-title">You decide</div>
+      <div class="loop-step-desc">Approve, edit, or override. One click — or full control. Always your call.</div>
+    </div>
+  </div>
+  <div class="loop-return">
+    <div class="loop-return-line"></div>
+    <div class="loop-return-text">↺ Loop learns from every decision</div>
+  </div>
+</div>
+</section>
+
+    <!-- ──────────────────────────────────────────────
+         SLIDE 8 — THE SHIFT
+         ────────────────────────────────────────────── -->
+    <section aria-label="Slide 8: Evolution — Passive to Proactive Copilot" class="slide s3" id="s3">
+<div aria-hidden="true" class="snum">08 / 18</div>
+<div class="lbl rv" data-d="1">The Shift</div>
+<h2 class="s3-h def-heading rv" data-d="2">AI Copilots are changing<br/>how work happens.</h2>
+<p class="s3-sub rv" data-d="3">Not a chatbot. Not a robot. An intelligent teammate<br/>embedded directly in your workflow.</p>
+<div aria-label="Evolution of AI tools" class="nodes">
+<div class="node">
+<div aria-hidden="true" class="node-ico">🖥️</div>
+<div class="node-title">Passive Tool</div>
+<div class="node-sub">You go to it. It waits.</div>
+</div>
+<div aria-hidden="true" class="nconn"></div>
+<div class="node">
+<div aria-hidden="true" class="node-ico">💬</div>
+<div class="node-title">Active Assistant</div>
+<div class="node-sub">Responds when asked.</div>
+</div>
+<div aria-hidden="true" class="nconn"></div>
+<div class="node active">
+<div aria-hidden="true" class="node-ico">🤖</div>
+<div class="node-title">Proactive Copilot</div>
+<div class="node-sub">Acts ahead of you. Inside the flow.</div>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 9 — THE COPILOT MOMENT
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 9: The copilot inflection point" class="slide s-moment" id="s-moment">
+<div aria-hidden="true" class="snum">09 / 18</div>
+<div class="slide-source">
+<a class="source-tag" href="https://fortune.com/tag/artificial-intelligence/" rel="noopener noreferrer" target="_blank">
+<span class="src-logo" style="background:#CC0000;">
+<svg viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<text fill="#fff" font-family="serif" font-size="14" font-weight="900" x="4" y="15">F</text>
+</svg>
+</span>
+          Fortune 500 AI Adoption Report, 2025
+        </a>
+</div>
+<div class="lbl rv" data-d="1">The Inflection Point</div>
+<div class="moment-big rv" data-d="2">
+<span id="cnt77">0</span><span class="acc">%</span>
+</div>
+<div class="moment-label rv" data-d="3">of Fortune 500 companies have deployed an AI copilot as of 2025</div>
+<div class="moment-stats">
+<div class="moment-stat">
+<div class="moment-stat-n">$19B</div>
+<div class="moment-stat-d">invested in enterprise AI tools in 2024</div>
+</div>
+<div class="moment-stat">
+<div class="moment-stat-n">4.2×</div>
+<div class="moment-stat-d">ROI reported in first year of deployment</div>
+</div>
+<div class="moment-stat">
+<div class="moment-stat-n">18 mo</div>
+<div class="moment-stat-d">average time to full team adoption</div>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 10 — MICROSOFT COPILOT (ORIGINAL SLIDE 4)
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 10: Microsoft Copilot" class="slide cs" id="s4">
+<div aria-hidden="true" class="snum">10 / 18</div>
+<div class="slide-source">
+<a class="source-tag" href="https://www.microsoft.com/en-us/worklab/work-trend-index" rel="noopener noreferrer" target="_blank">
+<span class="src-logo">
+<svg viewbox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#f25022" height="9.5" width="9.5" x="0" y="0"></rect>
+<rect fill="#7fba00" height="9.5" width="9.5" x="11.5" y="0"></rect>
+<rect fill="#00a4ef" height="9.5" width="9.5" x="0" y="11.5"></rect>
+<rect fill="#ffb900" height="9.5" width="9.5" x="11.5" y="11.5"></rect>
+</svg>
+</span>
+          Microsoft Work Trend Index, 2025
+        </a>
+</div>
+<div class="rv" data-d="1">
+<div class="lbl">Case Study 01</div>
+<h2 class="cs-h def-heading rv">Microsoft<br/>Copilot</h2>
+<p class="cs-sub">Embedded inside Dynamics 365, Teams, and CRM — not a separate tab.</p>
+<div class="steps">
+<div class="step">
+<div aria-hidden="true" class="sn">1</div>
+<span>Rep opens a deal → Copilot surfaces full CRM history, past emails &amp; calls instantly</span>
+</div>
+<div class="step">
+<div aria-hidden="true" class="sn">2</div>
+<span>Drafts a personalised follow-up email using context from the last 3 interactions</span>
+</div>
+<div class="step">
+<div aria-hidden="true" class="sn">3</div>
+<span>Logs call notes and updates CRM fields automatically — zero manual entry</span>
+</div>
+</div>
+</div>
+<div class="ba-wrap rv" data-d="2">
+<div class="lbl" style="margin-bottom:0.6em;">Daily CRM time per rep</div>
+<div class="ba-card">
+<div class="ba-tag bef">Before</div>
+<div class="ba-time">45 min</div>
+<div class="ba-desc">per day on manual CRM updates</div>
+<div class="ba-bar"><div class="ba-fill b-delay" style="--tw:100%; background:var(--text-muted);"></div></div>
+</div>
+<div class="ba-card after">
+<div class="ba-tag aft">After</div>
+<div class="ba-time">12 min</div>
+<div class="ba-desc">Copilot handles the rest automatically</div>
+<div class="ba-bar"><div class="ba-fill a-delay" style="--tw:26.7%; background:var(--accent);"></div></div>
+</div>
+<div class="out-chip">
+<strong>70% less CRM logging  ·  40% faster deal cycle</strong>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 5 — SALESFORCE EINSTEIN
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 11: Salesforce Einstein" class="slide cs" id="s5">
+<div aria-hidden="true" class="snum">11 / 18</div>
+<div class="slide-source">
+<a class="source-tag" href="https://www.salesforce.com/resources/research-reports/state-of-service/" rel="noopener noreferrer" target="_blank">
+<span class="src-logo" style="background:#00A1E0;">
+<svg viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<path d="M8.5 5.5 C8.5 3.6 10 2 12 2 C13.5 2 14.8 2.9 15.4 4.2 C15.7 4.1 16 4 16.3 4 C17.8 4 19 5.2 19 6.7 C19 8.2 17.8 9.4 16.3 9.4 L4.8 9.4 C3.3 9.4 2 8.1 2 6.6 C2 5.1 3.3 3.8 4.8 3.8 C5.2 3.8 5.6 3.9 5.9 4.1 C6.4 4.6 7.4 5.5 8.5 5.5Z" fill="#fff"></path>
+</svg>
+</span>
+          Salesforce State of Service, 2025
+        </a>
+</div>
+<div class="rv" data-d="1">
+<div class="lbl">Case Study 02</div>
+<h2 class="cs-h def-heading rv">Salesforce<br/>Einstein</h2>
+<p class="cs-sub">AI that lives inside every Sales Cloud and Service Cloud screen.</p>
+<div class="sf-stats">
+<div class="sf-stat">
+<div class="sf-stat-n">+38%</div>
+<div class="sf-stat-d">First-contact resolution rate</div>
+</div>
+<div class="sf-stat">
+<div class="sf-stat-n">−29%</div>
+<div class="sf-stat-d">Average handle time per ticket</div>
+</div>
+</div>
+<div class="out-chip" style="margin-top:0.8em;">
+<strong>Ticket → Einstein summarizes → Suggests → Agent approves → Done</strong>
+</div>
+</div>
+<div class="sf-vis rv" data-d="2">
+<div class="lbl" style="margin-bottom:0.8em;">Resolution time per ticket</div>
+<div class="sf-grp">
+<div class="sf-grp-hd">
+<div class="sf-metric bef">18 min</div>
+<span class="sf-lbl">Before Einstein</span>
+</div>
+<div class="sf-track"><div class="sf-fill b"></div></div>
+</div>
+<div class="sf-grp">
+<div class="sf-grp-hd">
+<div class="sf-metric aft">7 min</div>
+<span class="sf-lbl">After Einstein</span>
+</div>
+<div class="sf-track"><div class="sf-fill a"></div></div>
+</div>
+<div class="sf-big">
+<div class="sf-big-num">61%</div>
+<div class="sf-big-desc">faster resolution</div>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 6 — ZENDESK AI
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 12: Zendesk AI and eesel" class="slide cs" id="s6">
+<div aria-hidden="true" class="snum">12 / 18</div>
+<div class="slide-source">
+<a class="source-tag" href="https://www.zendesk.com/resources/cx-trends/" rel="noopener noreferrer" target="_blank">
+<span class="src-logo" style="background:#03363D;">
+<svg viewbox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+<text fill="#fff" font-family="sans-serif" font-size="14" font-weight="900" x="4" y="15">Z</text>
+</svg>
+</span>
+          Zendesk CX Trends, 2025
+        </a>
+</div>
+<div class="rv" data-d="1">
+<div class="lbl">Case Study 03</div>
+<h2 class="cs-h def-heading rv">Zendesk AI<br/>&amp; eesel</h2>
+<p class="cs-sub">Support copilots that understand your entire knowledge base instantly.</p>
+<div class="steps">
+<div class="step">
+<div aria-hidden="true" class="sn">1</div>
+<span>Ticket arrives → AI triages it and drafts a reply in seconds</span>
+</div>
+<div class="step">
+<div aria-hidden="true" class="sn">2</div>
+<span>Agent reviews the draft → one-click send</span>
+</div>
+<div class="step">
+<div aria-hidden="true" class="sn">3</div>
+<span>Handle time: 14 min → 5 min  ·  CSAT up 22%</span>
+</div>
+</div>
+<div class="out-chip" style="margin-top:0.8em;">
+<strong>3× more tickets resolved with the same headcount</strong>
+</div>
+</div>
+<div class="zd-chart rv" data-d="2">
+<canvas aria-label="Line chart: ticket volume rising while team size stays flat" id="zd-canvas"></canvas>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 13 — COMBINED PROOF
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 13: Industry proof and research backing" class="slide s-proof" id="s-proof">
+<div aria-hidden="true" class="snum">13 / 18</div>
+<div class="lbl rv" data-d="1">The Evidence</div>
+<h2 class="proof-h def-heading rv" data-d="2">Everyone is already here.</h2>
+<p class="proof-sub rv" data-d="3">Not pilots. Production systems, at scale — and the research confirms why.</p>
+<div class="proof-companies">
+<div class="proof-co">
+<div class="proof-co-name">Barclays</div>
+<div class="proof-co-result">40% faster code review</div>
+<div class="proof-co-what">AI copilots deployed to 4,000+ engineers. Review cycles compressed, compliance errors reduced.</div>
+</div>
+<div class="proof-co">
+<div class="proof-co-name">Morgan Stanley</div>
+<div class="proof-co-result">Hours → seconds</div>
+<div class="proof-co-what">16,000 advisors get instant access to 100,000+ research docs. Client prep collapses to one query.</div>
+</div>
+<div class="proof-co">
+<div class="proof-co-name">Coinbase</div>
+<div class="proof-co-result">90%+ tickets auto-resolved</div>
+<div class="proof-co-what">AI-first triage handles the vast majority of queries before human escalation — at any volume.</div>
+</div>
+<div class="proof-co">
+<div class="proof-co-name">Salesforce</div>
+<div class="proof-co-result">61% faster resolution</div>
+<div class="proof-co-what">Einstein copilot reduced average handle time from 18 min to 7 min across service teams globally.</div>
+</div>
+</div>
+<div class="proof-stats rv" data-d="4">
+<div class="proof-stat">
+<div class="proof-stat-firm">Gartner</div>
+<div class="proof-stat-n">80%</div>
+<div class="proof-stat-d">of enterprises deploy copilots by 2026</div>
+</div>
+<div class="proof-divider"></div>
+<div class="proof-stat">
+<div class="proof-stat-firm">McKinsey</div>
+<div class="proof-stat-n">$4.4T</div>
+<div class="proof-stat-d">global productivity gains from gen AI</div>
+</div>
+<div class="proof-divider"></div>
+<div class="proof-stat">
+<div class="proof-stat-firm">Forrester</div>
+<div class="proof-stat-n">337%</div>
+<div class="proof-stat-d">ROI over 3-year deployment</div>
+</div>
+<div class="proof-divider"></div>
+<div class="proof-stat">
+<div class="proof-stat-firm">BCG</div>
+<div class="proof-stat-n">+40%</div>
+<div class="proof-stat-d">task completion for AI-assisted workers</div>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 16 — PATTERNS
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 14: The pattern is clear" class="slide s7" id="s7">
+<div aria-hidden="true" class="snum">14 / 18</div>
+<div class="lbl rv" data-d="1">Patterns</div>
+<h2 class="s7-h def-heading rv" data-d="2">The pattern is clear.</h2>
+<p class="s7-sub rv" data-d="3">Across every tool, the same three shifts emerge.</p>
+<div class="p-cards">
+<div class="p-card">
+<div class="p-card-stat">4×</div>
+<div class="p-card-title">Embedded &gt; Standalone</div>
+<div class="p-card-desc">AI inside the tool sees 4× higher adoption than AI in a separate tab. Friction kills usage every time.</div>
+</div>
+<div class="p-card">
+<div class="p-card-stat">↑ Trust</div>
+<div class="p-card-title">Suggest &gt; Automate</div>
+<div class="p-card-desc">Copilots that suggest and let humans approve see higher trust, higher usage, and far fewer errors.</div>
+</div>
+<div class="p-card">
+<div class="p-card-stat">3× ROI</div>
+<div class="p-card-title">Context &gt; Commands</div>
+<div class="p-card-desc">Tools that understand workflow context outperform prompt-only tools by 3× on every measurable outcome.</div>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 15 — DH VISION
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 15: What copilots look like inside Delivery Hero" class="slide s-dhvision" id="s-dhvision">
+<div aria-hidden="true" class="snum">15 / 18</div>
+<div class="dhv-top">
+  <div class="lbl rv" data-d="1">At Delivery Hero</div>
+  <h2 class="dhv-h def-heading rv" data-d="2">What it looks like<br/>inside our tools.</h2>
+  <p class="dhv-sub rv" data-d="3">Four teams. Four copilots. All embedded where the work already happens.</p>
+</div>
+<div class="dhv-grid">
+  <div class="dhv-card">
+    <div class="dhv-tool">Partner Portal</div>
+    <div class="dhv-role">Sales Team</div>
+    <div class="dhv-title">Open a deal → full partner context surfaces instantly</div>
+    <div class="dhv-desc">Past NPS, open issues, revenue trend, and a draft follow-up email — ready before the first scroll. No tab-switching, no digging.</div>
+    <span class="dhv-impact">−60% CRM prep time</span>
+  </div>
+  <div class="dhv-card">
+    <div class="dhv-tool">Onboarding System</div>
+    <div class="dhv-role">Onboarding Agents</div>
+    <div class="dhv-title">New vendor submitted → checklist auto-filled, gaps flagged</div>
+    <div class="dhv-desc">The copilot reads the submission, fills what it can, and surfaces the exact missing fields. No more back-and-forth email chains to collect docs.</div>
+    <span class="dhv-impact">−50% time-to-live</span>
+  </div>
+  <div class="dhv-card">
+    <div class="dhv-tool">QC Review Tool</div>
+    <div class="dhv-role">QC Agents</div>
+    <div class="dhv-title">Review arrives → anomalies scored, resolution suggested</div>
+    <div class="dhv-desc">Risk flagged, similar past cases surfaced, suggested action pre-written. The agent focuses on judgment — not search, not copy-paste.</div>
+    <span class="dhv-impact">−60% review cycles</span>
+  </div>
+  <div class="dhv-card">
+    <div class="dhv-tool">Account Management</div>
+    <div class="dhv-role">Account Managers</div>
+    <div class="dhv-title">Pre-meeting brief auto-generated from live CRM data</div>
+    <div class="dhv-desc">Revenue trend, churn risk, upsell signal, and last interaction summary — all in one view, before the call starts. Show up informed every time.</div>
+    <span class="dhv-impact">+40% account coverage</span>
+  </div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 16 — OPPORTUNITY
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 16: Opportunity at Delivery Hero" class="slide s8" id="s8">
+<div aria-hidden="true" class="snum">16 / 18</div>
+<div class="s8-top">
+<div class="lbl rv" data-d="1">The Opportunity</div>
+<h2 class="s8-h def-heading rv" data-d="2">What this means for Delivery Hero.</h2>
+<p class="s8-sub rv" data-d="3">We have the users, the workflows, and the data.<br/>We just need the copilot.</p>
+</div>
+<div class="opp-cards">
+<div class="opp-card">
+<div class="opp-num">01</div>
+<div class="opp-title">Onboarding Copilot</div>
+<div class="opp-desc">Guide new vendors through setup. Auto-fill forms. Surface missing info in real time. No more back-and-forth.</div>
+<span class="chip">−50% onboarding time</span>
+</div>
+<div class="opp-card">
+<div class="opp-num">02</div>
+<div class="opp-title">Sales CRM Assistant</div>
+<div class="opp-desc">Log calls, draft follow-ups, score leads automatically. Give reps their hours back for actual selling.</div>
+<span class="chip">−60% admin overhead</span>
+</div>
+<div class="opp-card">
+<div class="opp-num">03</div>
+<div class="opp-title">QC Automation Copilot</div>
+<div class="opp-desc">Flag anomalies, suggest resolutions, reduce manual review cycles. QC agents focus on judgment, not search.</div>
+<span class="chip">−60% review time</span>
+</div>
+<div class="opp-card">
+<div class="opp-num">04</div>
+<div class="opp-title">Account Manager Copilot</div>
+<div class="opp-desc">Auto-generate account briefs before every call — revenue trend, risk flags, upsell signals. Show up informed, every time.</div>
+<span class="chip">+40% account coverage</span>
+</div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 17 — NEXT STEPS
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 17: How we start" class="slide s-nextsteps" id="s-nextsteps">
+<div aria-hidden="true" class="snum">17 / 18</div>
+<div class="ns-left">
+  <div class="lbl rv" data-d="1">How We Start</div>
+  <h2 class="ns-h def-heading rv" data-d="2">One team.<br/>One workflow.<br/>90 days.</h2>
+  <p class="ns-sub rv" data-d="3">We don't need to solve everything. We need to prove one thing — then scale the proof.</p>
+  <div class="ns-cta rv" data-d="4">"The copilot that saves one person an hour a day is proof. The copilot deployed to every team is transformation."</div>
+</div>
+<div class="ns-right">
+  <div class="ns-phase">
+    <div class="ns-node">
+      <div class="ns-dot">1</div>
+      <div class="ns-line"></div>
+    </div>
+    <div class="ns-content">
+      <div class="ns-timeframe">Week 1–2 · Choose</div>
+      <div class="ns-phase-title">Pick the highest-pain workflow</div>
+      <div class="ns-phase-desc">Where does your team lose the most hours? That's the first copilot. Pick one team, one use case, one baseline to beat.</div>
+    </div>
+  </div>
+  <div class="ns-phase">
+    <div class="ns-node">
+      <div class="ns-dot">2</div>
+      <div class="ns-line"></div>
+    </div>
+    <div class="ns-content">
+      <div class="ns-timeframe">Week 3–10 · Pilot</div>
+      <div class="ns-phase-title">Deploy, measure, document</div>
+      <div class="ns-phase-desc">Run the copilot with a small team. Measure before/after time on task, error rate, and satisfaction. Build the ROI case in real data.</div>
+    </div>
+  </div>
+  <div class="ns-phase">
+    <div class="ns-node">
+      <div class="ns-dot">3</div>
+      <div class="ns-line"></div>
+    </div>
+    <div class="ns-content">
+      <div class="ns-timeframe">Week 11+ · Scale</div>
+      <div class="ns-phase-title">Roll out, then expand the scope</div>
+      <div class="ns-phase-desc">Use the pilot data to justify full team rollout. Then move to the next workflow. Each copilot makes the case for the next one.</div>
+    </div>
+  </div>
+</div>
+</section>
+<!-- ──────────────────────────────────────────────
+         SLIDE 18 — CLOSING
+         ────────────────────────────────────────────── -->
+<section aria-label="Slide 18: The future of operations is augmented" class="slide s9" id="s9">
+<div aria-hidden="true" class="snum">18 / 18</div>
+<div aria-hidden="true" class="s9-bg">
+<canvas id="node-canvas"></canvas>
+</div>
+<div class="s9-inner">
+<div class="lbl rv" data-d="1">2025 → Beyond</div>
+<h2 class="s9-h def-heading rv" data-d="2">The future of operations<br/>is augmented.</h2>
+<p class="s9-sub rv" data-d="3">Every team moves faster. Every decision is better informed.<br/>Every person on your team becomes dramatically more effective.</p>
+<div class="rv" data-d="4" style="display:flex; gap:clamp(0.6rem,1.2vw,1rem); flex-wrap:wrap; justify-content:center;">
+  <span class="chip" style="font-size:var(--fs-body); padding:0.5em 1.4em;">Let's choose the first copilot.</span>
+  <span class="chip" style="font-size:var(--fs-body); padding:0.5em 1.4em; background:rgba(var(--blue-rgb),0.08); border-color:rgba(var(--blue-rgb),0.22); color:var(--blue);">What's your highest-pain workflow?</span>
+</div>
+</div>
+<div class="s9-foot">Built for Delivery Hero's Vendor &amp; Partner Operations team · 2025</div>
+</section>
+</div><!-- /#deck -->
+<script>
+    /* ============================================================
+       SLIDE PRESENTATION CONTROLLER
+       ============================================================ */
+    class Deck {
+      constructor() {
+        this.wrap     = document.getElementById('deck');
+        this.slides   = Array.from(document.querySelectorAll('.slide'));
+        this.total    = this.slides.length;
+        this.current  = 0;
+        this.busy     = false;
+
+        this.progress = document.getElementById('progress');
+        this.dotsEl   = document.getElementById('dots');
+
+        this._buildDots();
+        this._buildS1Grid();
+        this._buildAmbients();
+        this._bindKeys();
+        this._bindWheel();
+        this._bindTouch();
+        this._go(0);
+      }
+
+      /* ── Navigation ── */
+      _go(idx) {
+        if (idx < 0 || idx >= this.total) return;
+
+        // Remove .on from departing slide — slide is moving out of view so the
+        // instant reset to hidden state is invisible, and ensures transitions
+        // replay correctly when navigating back.
+        const prev = this.slides[this.current];
+        if (prev && this.current !== idx) prev.classList.remove('on');
+
+        this.current = idx;
+        this.wrap.style.transform = `translateX(calc(-100vw * ${idx}))`;
+        this._updateProgress();
+        this._updateDots();
+
+        // Activate incoming slide on the next frame — after the CSS transition
+        // has started, so all animated children replay from their initial state.
+        requestAnimationFrame(() => {
+          const slide = this.slides[idx];
+          if (slide) {
+            slide.classList.add('on');
+            this._runSlideInit(slide, idx);
+          }
+        });
+      }
+
+      next() { this._go(this.current + 1); }
+      prev() { this._go(this.current - 1); }
+
+      /* ── Slide-specific init (replays on every visit) ── */
+      _runSlideInit(slide, idx) {
+        // Slide 2 (idx 1): animated counter — 57%
+        if (idx === 1) {
+          this._counter('cnt57', 57, 1600);
+        }
+        // Slide 9 (idx 8): animated counter — 77%
+        if (idx === 8) {
+          this._counter('cnt77', 77, 1600);
+        }
+        // Slide 12 (idx 11): Zendesk canvas chart
+        if (idx === 11) {
+          setTimeout(() => this._drawZendesk(), 400);
+        }
+        // Slide 18 (idx 17): closing node canvas
+        if (idx === 17 && !slide._nodes) {
+          slide._nodes = true;
+          setTimeout(() => this._startNodes(), 200);
+        }
+      }
+
+      /* ── Animated counter ── */
+      _counter(id, target, ms) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const start = performance.now();
+        const ease  = t => 1 - Math.pow(1 - t, 4);
+        const tick  = now => {
+          const p = Math.min((now - start) / ms, 1);
+          el.textContent = Math.round(ease(p) * target);
+          if (p < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }
+
+      /* ── Zendesk line chart (canvas) ── */
+      _drawZendesk() {
+        const canvas = document.getElementById('zd-canvas');
+        if (!canvas) return;
+
+        const wrap = canvas.parentElement;
+        const dpr  = window.devicePixelRatio || 1;
+        const W    = wrap.clientWidth;
+        const H    = Math.min(wrap.clientHeight || 300, 300);
+
+        canvas.width  = W * dpr;
+        canvas.height = H * dpr;
+        canvas.style.width  = W + 'px';
+        canvas.style.height = H + 'px';
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+
+        const months   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+        const resolved = [100, 132, 178, 226, 298, 368, 440, 530];
+        const team     = [100, 101, 100, 102, 100, 101, 100, 102];
+        const maxV     = 560;
+
+        const pL=44, pR=14, pT=16, pB=36;
+        const cW = W - pL - pR;
+        const cH = H - pT - pB;
+
+        const xAt = i => pL + (i / (months.length - 1)) * cW;
+        const yAt = v => pT + cH - (v / maxV) * cH;
+
+        /* Grid */
+        const drawGrid = () => {
+          ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+          ctx.lineWidth = 1;
+          [0, 0.25, 0.5, 0.75, 1].forEach(t => {
+            const y = pT + cH * (1 - t);
+            ctx.beginPath(); ctx.moveTo(pL, y); ctx.lineTo(pL + cW, y); ctx.stroke();
+          });
+          ctx.fillStyle = 'rgba(136,146,164,0.7)';
+          ctx.font = `${Math.max(9, W * 0.022)}px DM Sans, sans-serif`;
+          ctx.textAlign = 'center';
+          months.forEach((m, i) => ctx.fillText(m, xAt(i), H - 8));
+        };
+
+        let prog = 0;
+        const frame = () => {
+          ctx.clearRect(0, 0, W, H);
+          drawGrid();
+
+          const end = prog * (months.length - 1);
+          const pts = Math.floor(end);
+          const frac = end - pts;
+
+          /* Team size (dashed flat) */
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(76,100,180,0.55)';
+          ctx.lineWidth   = 1.5;
+          ctx.setLineDash([5,5]);
+          months.forEach((_, i) => {
+            const x = xAt(i), y = yAt(team[i]);
+            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            if (i > pts) return;
+          });
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          /* Resolved tickets (animated) */
+          ctx.beginPath();
+          ctx.strokeStyle = '#4629FF';
+          ctx.lineWidth   = 2.5;
+          for (let i = 0; i <= Math.min(pts + 1, months.length - 1); i++) {
+            let x, y;
+            if (i <= pts) {
+              x = xAt(i); y = yAt(resolved[i]);
+            } else {
+              x = xAt(pts) + (xAt(pts + 1) - xAt(pts)) * frac;
+              y = yAt(resolved[pts] + (resolved[pts + 1] - resolved[pts]) * frac);
+            }
+            i === 0 ? ctx.moveTo(xAt(0), yAt(resolved[0])) : ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+
+          if (prog < 1) {
+            prog = Math.min(1, prog + 0.018);
+            requestAnimationFrame(frame);
+          } else {
+            /* Final dots */
+            resolved.forEach((v, i) => {
+              ctx.beginPath();
+              ctx.fillStyle = '#4629FF';
+              ctx.arc(xAt(i), yAt(v), 3.5, 0, Math.PI * 2);
+              ctx.fill();
+            });
+            /* Labels */
+            ctx.font = `bold ${Math.max(9, W * 0.022)}px DM Sans, sans-serif`;
+            ctx.fillStyle = '#4629FF';
+            ctx.textAlign = 'right';
+            ctx.fillText('Tickets resolved ↑', xAt(7) - 4, yAt(530) - 10);
+
+            ctx.fillStyle = 'rgba(76,100,180,0.85)';
+            ctx.font = `${Math.max(9, W * 0.022)}px DM Sans, sans-serif`;
+            ctx.fillText('Team size (flat) →', xAt(7) - 4, yAt(102) - 10);
+          }
+        };
+        requestAnimationFrame(frame);
+      }
+
+      /* ── Node animation (canvas — slide 9) ── */
+      _startNodes() {
+        const canvas = document.getElementById('node-canvas');
+        if (!canvas) return;
+
+        const setSize = () => {
+          const dpr = window.devicePixelRatio || 1;
+          canvas.width  = window.innerWidth  * dpr;
+          canvas.height = window.innerHeight * dpr;
+          canvas.style.width  = window.innerWidth  + 'px';
+          canvas.style.height = window.innerHeight + 'px';
+          canvas.getContext('2d').scale(dpr, dpr);
+        };
+        setSize();
+
+        const ctx = canvas.getContext('2d');
+        const W = () => window.innerWidth;
+        const H = () => window.innerHeight;
+
+        /* Satellites around center */
+        const N = 9;
+        const sats = Array.from({length: N}, (_, i) => ({
+          angle:  (i / N) * Math.PI * 2 + Math.random() * 0.4,
+          r:      Math.min(W(), H()) * (0.22 + Math.random() * 0.14),
+          speed:  (0.0002 + Math.random() * 0.00025) * (Math.random() > 0.5 ? 1 : -1),
+          size:   2.5 + Math.random() * 4,
+          phase:  Math.random() * Math.PI * 2,
+          ps:     0.015 + Math.random() * 0.02,
+        }));
+
+        /* Ambient particles */
+        const parts = Array.from({length: 40}, () => ({
+          x: Math.random() * W(), y: Math.random() * H(),
+          vx: (Math.random() - 0.5) * 0.25,
+          vy: (Math.random() - 0.5) * 0.25,
+          r:  0.8 + Math.random() * 1.8,
+          a:  0.1 + Math.random() * 0.3,
+        }));
+
+        let t = 0;
+        const draw = () => {
+          ctx.clearRect(0, 0, W(), H());
+          t++;
+
+          const cx = W() / 2, cy = H() / 2;
+
+          sats.forEach(s => { s.angle += s.speed; s.phase += s.ps; });
+
+          const pos = sats.map(s => ({
+            x: cx + Math.cos(s.angle) * s.r,
+            y: cy + Math.sin(s.angle) * s.r * 0.52,
+            s,
+          }));
+
+          /* Lines from center to satellites */
+          pos.forEach((p, i) => {
+            const a = 0.05 + 0.04 * Math.sin(t * 0.018 + i);
+            const g = ctx.createLinearGradient(cx, cy, p.x, p.y);
+            g.addColorStop(0, `rgba(70,41,255,${a * 2.5})`);
+            g.addColorStop(1, `rgba(76,158,255,${a})`);
+            ctx.beginPath();
+            ctx.strokeStyle = g;
+            ctx.lineWidth = 0.75;
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+
+            /* Ring connections */
+            const nx = pos[(i + 1) % pos.length];
+            ctx.beginPath();
+            ctx.strokeStyle = `rgba(76,158,255,${a * 0.5})`;
+            ctx.lineWidth = 0.4;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(nx.x, nx.y);
+            ctx.stroke();
+          });
+
+          /* Satellite nodes */
+          pos.forEach(p => {
+            const pulse = 0.5 + 0.5 * Math.sin(p.s.phase);
+            const gr = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 22);
+            gr.addColorStop(0, `rgba(76,158,255,${0.12 + pulse * 0.1})`);
+            gr.addColorStop(1, 'transparent');
+            ctx.beginPath(); ctx.fillStyle = gr;
+            ctx.arc(p.x, p.y, 22, 0, Math.PI * 2); ctx.fill();
+
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(76,158,255,${0.55 + pulse * 0.45})`;
+            ctx.arc(p.x, p.y, p.s.size, 0, Math.PI * 2); ctx.fill();
+          });
+
+          /* Center node */
+          const cp = 0.5 + 0.5 * Math.sin(t * 0.035);
+          const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 70);
+          cg.addColorStop(0, `rgba(70,41,255,${0.22 + cp * 0.12})`);
+          cg.addColorStop(1, 'transparent');
+          ctx.beginPath(); ctx.fillStyle = cg;
+          ctx.arc(cx, cy, 70, 0, Math.PI * 2); ctx.fill();
+
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(70,41,255,${0.8 + cp * 0.2})`;
+          ctx.arc(cx, cy, 7 + cp * 3, 0, Math.PI * 2); ctx.fill();
+
+          /* Ambient particles */
+          parts.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            if (p.x < 0 || p.x > W()) p.vx *= -1;
+            if (p.y < 0 || p.y > H()) p.vy *= -1;
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(255,255,255,${p.a})`;
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+          });
+
+          requestAnimationFrame(draw);
+        };
+        draw();
+
+        window.addEventListener('resize', () => {
+          setSize();
+          parts.forEach(p => {
+            p.x = Math.random() * W();
+            p.y = Math.random() * H();
+          });
+        });
+      }
+
+      /* ── Ambient background blobs (thematic per slide) ── */
+      _buildAmbients() {
+        const rg = (rgb, a) =>
+          `radial-gradient(circle, rgba(${rgb},${a}) 0%, transparent 65%)`;
+
+        const ACC = '70,41,255';    // Cape brand violet
+        const BLU = '76,158,255';   // info blue
+        const ORG = '255,120,40';   // warm orange
+        const RED = '255,55,35';    // hot red
+        const MSB = '0,164,239';    // Microsoft blue
+        const SFB = '0,161,224';    // Salesforce blue
+        const ZDT = '3,161,120';    // Zendesk teal
+
+        // [ slideId, [ [w, h, left, top, bg, animation] ] ]
+        const slides = [
+          ['s-cover', [
+            ['100vh','100vh','-20%','-20%', rg(ACC,0.22), 'blob-a 14s ease-in-out infinite'],
+            ['60vh', '60vh', '58%', '-8%',  rg(BLU,0.14), 'blob-b 20s ease-in-out infinite'],
+            ['45vh', '45vh', '5%',  '65%',  rg(ACC,0.10), 'blob-c 26s ease-in-out infinite'],
+          ]],
+          // 57% hook — left-heavy (matches big counter on left)
+          ['s1', [
+            ['90vh', '90vh', '-18%', '5%',  rg(ACC,0.18), 'blob-a 13s ease-in-out infinite'],
+            ['55vh', '55vh', '48%',  '18%', rg(BLU,0.10), 'blob-b 19s ease-in-out infinite'],
+          ]],
+          // History timeline — left→right time sweep
+          ['s-hist', [
+            ['65vh', '85vh', '-8%',  '8%',  rg(ACC,0.14), 'blob-b 17s ease-in-out infinite'],
+            ['55vh', '55vh', '60%',  '30%', rg(BLU,0.12), 'blob-c 22s ease-in-out infinite'],
+          ]],
+          // Copilot Definition — centered accent glow, clarity
+          ['s-def', [
+            ['90vh', '90vh', '-5%',  '-30%', rg(ACC,0.14), 'blob-a 16s ease-in-out infinite'],
+            ['70vh', '70vh', '35%',  '-20%', rg(BLU,0.10), 'blob-b 20s ease-in-out infinite'],
+          ]],
+          // Bar chart — analytical, cool blue right-side
+          ['s2', [
+            ['72vh', '72vh', '52%',  '8%',  rg(BLU,0.16), 'blob-b 16s ease-in-out infinite'],
+            ['42vh', '42vh', '-6%',  '38%', rg(ACC,0.09), 'blob-c 23s ease-in-out infinite'],
+          ]],
+          // Copilot Loop — right-side blue for AI steps, subtle left accent
+          ['s-loop', [
+            ['72vh', '72vh', '52%',  '-12%', rg(BLU,0.14), 'blob-b 15s ease-in-out infinite'],
+            ['50vh', '50vh', '-8%',  '32%',  rg(ACC,0.09), 'blob-c 22s ease-in-out infinite'],
+          ]],
+          // Why Now — dawn convergence from below
+          ['s-whynow', [
+            ['115vh','80vh', '-5%',  '42%', rg(ACC,0.19), 'blob-b 10s ease-in-out infinite'],
+            ['52vh', '52vh', '28%',  '-18%',rg(BLU,0.10), 'blob-c 17s ease-in-out infinite'],
+          ]],
+          // AI Shift / nodes — diagonal transformation: dim left → bright right
+          ['s3', [
+            ['72vh', '72vh', '-6%',  '22%', rg(ACC,0.10), 'blob-c 19s ease-in-out infinite'],
+            ['85vh', '85vh', '48%',  '12%', rg(ACC,0.20), 'blob-a 12s ease-in-out infinite'],
+          ]],
+          // Why Now — three-force converge energy
+          ['s-whynow', [
+            ['72vh', '55vh', '14%',  '-22%', rg(BLU,0.15), 'blob-b 20s ease-in-out infinite'],
+            ['42vh', '42vh', '64%',  '48%',  rg(ACC,0.09), 'blob-c 25s ease-in-out infinite'],
+          ]],
+          // Inflection moment — DRAMATIC surge from below (high opacity)
+          ['s-moment', [
+            ['125vh','85vh', '-12%', '48%', rg(ACC,0.28), 'blob-a 8s ease-in-out infinite'],
+            ['62vh', '62vh', '54%',  '-6%', rg(BLU,0.14), 'blob-b 13s ease-in-out infinite'],
+          ]],
+          // Microsoft — brand Windows blue
+          ['s4', [
+            ['68vh', '68vh', '54%',  '-16%', rg(MSB,0.20), 'blob-b 14s ease-in-out infinite'],
+            ['42vh', '42vh', '-6%',  '52%',  rg(MSB,0.12), 'blob-c 20s ease-in-out infinite'],
+          ]],
+          // Salesforce — SF blue
+          ['s5', [
+            ['78vh', '78vh', '48%',  '8%',  rg(SFB,0.20), 'blob-a 13s ease-in-out infinite'],
+            ['48vh', '48vh', '-6%',  '28%', rg(SFB,0.11), 'blob-c 21s ease-in-out infinite'],
+          ]],
+          // Zendesk — teal
+          ['s6', [
+            ['72vh', '72vh', '-12%', '38%', rg(ZDT,0.20), 'blob-b 15s ease-in-out infinite'],
+            ['48vh', '48vh', '58%',  '4%',  rg(ZDT,0.12), 'blob-a 21s ease-in-out infinite'],
+          ]],
+          // Combined Proof — validation energy: gold + blue
+          ['s-proof', [
+            ['80vh', '80vh', '-10%', '10%', rg(BLU,0.14),           'blob-b 16s ease-in-out infinite'],
+            ['65vh', '65vh', '55%',  '30%', rg(ACC,0.14),           'blob-a 13s ease-in-out infinite'],
+          ]],
+          // DH Vision — brand home energy
+          ['s-dhvision', [
+            ['90vh', '90vh', '35%',  '-15%', rg(ACC,0.18), 'blob-a 15s ease-in-out infinite'],
+            ['50vh', '50vh', '-8%',  '35%',  rg(BLU,0.12), 'blob-b 20s ease-in-out infinite'],
+          ]],
+          // Next Steps — forward momentum
+          ['s-nextsteps', [
+            ['70vh', '70vh', '50%',  '-10%', rg(ACC,0.16), 'blob-b 14s ease-in-out infinite'],
+            ['45vh', '45vh', '-5%',  '40%',  rg(BLU,0.09), 'blob-c 22s ease-in-out infinite'],
+          ]],
+          // Patterns — systematic central brand glow
+          ['s7', [
+            ['82vh', '82vh', '8%',   '8%',  rg(ACC,0.16), 'blob-c 16s ease-in-out infinite'],
+            ['52vh', '52vh', '54%',  '38%', rg(BLU,0.10), 'blob-b 22s ease-in-out infinite'],
+          ]],
+          // DH Opportunity — forward sweep rightward
+          ['s8', [
+            ['78vh', '78vh', '44%',  '12%', rg(ACC,0.20), 'blob-a 12s ease-in-out infinite'],
+            ['52vh', '52vh', '-6%',  '28%', rg(BLU,0.11), 'blob-b 18s ease-in-out infinite'],
+          ]],
+          // Closing — canvas handles main visual; stay subtle
+          ['s9', [
+            ['85vh', '85vh', '8%',   '8%',  rg(ACC,0.11), 'blob-c 19s ease-in-out infinite'],
+          ]],
+        ];
+
+        slides.forEach(([id, blobs]) => {
+          const slide = document.getElementById(id);
+          if (!slide) return;
+          const wrap = document.createElement('div');
+          wrap.className = 'slide-ambient';
+          blobs.forEach(([w, h, l, t, bg, anim]) => {
+            const blob = document.createElement('div');
+            blob.className = 'sa-blob';
+            blob.style.cssText =
+              `width:${w};height:${h};left:${l};top:${t};background:${bg};animation:${anim};`;
+            wrap.appendChild(blob);
+          });
+          slide.insertBefore(wrap, slide.firstChild);
+        });
+      }
+
+      /* ── Nav dots ── */
+      _buildS1Grid() {
+        const grid = document.getElementById('s1-grid');
+        if (!grid) return;
+        for (let i = 0; i < 100; i++) {
+          const sq = document.createElement('div');
+          sq.className = i < 57 ? 's1-sq s1-sq-on' : 's1-sq';
+          sq.style.transitionDelay = `${i * 18}ms`;
+          grid.appendChild(sq);
+        }
+      }
+
+      _buildDots() {
+        this.dotsEl.innerHTML = '';
+        this.slides.forEach((_, i) => {
+          const btn = document.createElement('button');
+          btn.className = 'dot';
+          btn.setAttribute('aria-label', `Go to slide ${i + 1}`);
+          btn.addEventListener('click', () => this._go(i));
+          this.dotsEl.appendChild(btn);
+        });
+      }
+
+      _updateDots() {
+        this.dotsEl.querySelectorAll('.dot').forEach((d, i) => {
+          d.classList.toggle('on', i === this.current);
+        });
+      }
+
+      _updateProgress() {
+        const pct = (this.current / (this.total - 1)) * 100;
+        this.progress.style.width = pct + '%';
+      }
+
+      /* ── Input bindings ── */
+      _bindKeys() {
+        document.addEventListener('keydown', e => {
+          if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); this.next(); }
+          else if (['ArrowLeft','ArrowUp'].includes(e.key))   { e.preventDefault(); this.prev(); }
+          else if (e.key === 'Home') { e.preventDefault(); this._go(0); }
+          else if (e.key === 'End')  { e.preventDefault(); this._go(this.total - 1); }
+        });
+      }
+
+      _bindWheel() {
+        let last = 0;
+        document.addEventListener('wheel', e => {
+          e.preventDefault();
+          const now = Date.now();
+          if (now - last < 650) return;
+          last = now;
+          e.deltaY > 0 || e.deltaX > 0 ? this.next() : this.prev();
+        }, { passive: false });
+      }
+
+      _bindTouch() {
+        let sx = 0, sy = 0;
+        document.addEventListener('touchstart', e => {
+          sx = e.touches[0].clientX;
+          sy = e.touches[0].clientY;
+        }, { passive: true });
+        document.addEventListener('touchend', e => {
+          const dx = e.changedTouches[0].clientX - sx;
+          const dy = e.changedTouches[0].clientY - sy;
+          if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+            dx < 0 ? this.next() : this.prev();
+          }
+        }, { passive: true });
+      }
+    }
+
+    /* ── Boot ── */
+    window.addEventListener('DOMContentLoaded', () => new Deck());
+  </script>
+</body>
+</html>
